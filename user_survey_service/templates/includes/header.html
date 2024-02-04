@@ -1,0 +1,13 @@
+{% load static %}
+<header>
+  <nav class="navbar navbar-light" style="background-color: lightskyblue">
+    <div class="container">
+        {% with request.resolver_match.view_name as view_name %}
+        <li>
+          Пользователь в системе: {{ user.username }}
+        </li>
+        {% endwith %}
+      </ul>
+    </div>
+  </nav>      
+</header> 

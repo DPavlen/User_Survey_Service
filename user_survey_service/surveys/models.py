@@ -59,7 +59,8 @@ class Question(models.Model):
 
 class Answer(models.Model):
     """Модель ответов. 
-    Ответ связан с одним опросом и вопросом."""
+    У каждого ответа есть соотвествующий автор, опрос и вопрос.
+    """
     title = models.CharField(
         "Ответ", 
         unique=True,
