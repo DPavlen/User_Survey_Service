@@ -1,4 +1,8 @@
 from django.db import models
+from django.contrib.auth import get_user_model
+
+
+User = get_user_model()
 
 
 class Survey(models.Model):
@@ -14,7 +18,7 @@ class Survey(models.Model):
         max_length=255,
     )
     slug = models.SlugField(
-        "Уникальный слаг",
+        "Уникальный слаг опроса",
         unique=True,
         max_length=155,
     )
@@ -54,24 +58,39 @@ class Question(models.Model):
 
 
 class Answer(models.Model):
-    """Модель ответов. Ответ связан с одним вопросом."""
+    """Модель ответов. 
+    Ответ связан с одним опросом и вопросом."""
     title = models.CharField(
         "Ответ", 
         unique=True,
         max_length=255
     )
     text = models.TextField()
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        verbose_name="Автор опросов",
+        related_name="answers",
+    )
+    survey = models.ForeignKey(
+        Survey, 
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        related_name="answers",
+        verbose_name="Опрос",
+    )
     question = models.ForeignKey(
         Question, 
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        related_name="answer",
+        related_name="answers",
         verbose_name="Вопрос",
     )
    
     def __str__(self):
-        return self.title
+        return self.title 
 
     class Meta:
         verbose_name = "Ответ"
