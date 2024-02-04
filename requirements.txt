@@ -1,2 +1,5 @@
 Django==4.2
+requests==2.31.0
 sqlparse==0.4.4
+sorl-thumbnail==12.10.0
+django-bootstrap4==24.1
