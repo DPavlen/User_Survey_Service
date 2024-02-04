@@ -1,16 +1,18 @@
+
 {% extends 'base.html' %}
-{% block title %} Последние обновления на сайте {% endblock %} 
+
+{% block title %}Последние обновления на сайте{% endblock %}
+
 {% block header %}Последние обновления на сайте{% endblock %}
 
 {% block content %}
-
 <div class="container py-5">
     <h1>Список опросов пользователей</h1> 
-    {% for survey in surveys %}
+    {% for survey in page_obj %}
     <article>
         <ul>
           <li>
-            Заголовок опроса: {{ survey.title }}
+            <strong>Заголовок опроса:</strong> {{ survey.title }}
           </li>
           <li>
             <p>{{ survey.description }}</p>
@@ -19,5 +21,4 @@
     </article>
     {% endfor %}
 </div>
-
 {% endblock %}
