@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+
+{% block content %}
+  <h1>Детальная информация об Опросах</h1>
+  {% for question in page_obj %}
+    <h2>{{ question.title }}</h2>
+    <p>{{ question.description }}</p>
+    <!-- TODO -->
+  {% endfor %}
+{% endblock %}

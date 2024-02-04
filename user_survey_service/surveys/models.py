@@ -26,7 +26,6 @@ class Survey(models.Model):
     def __str__(self):
         return self.title
 
-
     class Meta:
         verbose_name = "Опрос"
         verbose_name_plural = "Опросы"
@@ -45,7 +44,7 @@ class Question(models.Model):
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        related_name="question",
+        related_name="questions",
         verbose_name="Опрос",
     )
    

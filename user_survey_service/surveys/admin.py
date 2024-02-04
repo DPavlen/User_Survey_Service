@@ -6,8 +6,8 @@ from surveys.models import Survey, Question, Answer
 @admin.register(Survey)
 class SurveyAdmin(admin.ModelAdmin):
     list_display = ("pk", "title", "description", "slug")
-    list_display_links = ("title",)
-    search_fields = ("title",)
+    list_display_links = ("pk", "title",)
+    search_fields = ("pk", "title",)
     empty_value_display = "-пусто-"
 
 
