@@ -2,7 +2,7 @@
 
 {% block content %}
   <h1>Детальная информация об Опросах</h1>
-  {% for question in page_obj %}
+  {% for question in questions %}
     <h2>{{ question.title }}</h2>
     <p>{{ question.description }}</p>
     <!-- TODO -->

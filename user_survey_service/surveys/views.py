@@ -18,7 +18,8 @@ def get_paginated_objects(objects, request):
 
 def survey_list(request):
     """Главная страница списка опросов пользователей."""
-    surveys = Survey.objects.all()
+    # surveys = Survey.objects.all()
+    surveys = Survey.objects.raw('SELECT * FROM surveys_survey')
     page_obj = get_paginated_objects(surveys, request)
     context = {
         'page_obj': page_obj,
@@ -36,7 +37,7 @@ def survey_detail_view(request, pk):
     return render(request, "surveys/survey_detail_view.html", context)
 
 
-class Survey_Submit_View(View):
+class SurveySubmitView(View):
     """Форма отправки ответов на опросы."""
     def get(self, request, pk):
         """Получение ответа."""
@@ -51,5 +52,6 @@ class Survey_Submit_View(View):
     def post(self, request, pk):
         """Создание ответа."""
         survey = get_object_or_404(Survey, pk=pk)
-        questions = survey.question_set.all()
-        return redirect("survey_detail", pk=survey.pk)
+        questions = survey.questions.all()
+        return redirect("surveys:survey_detail_view", pk=survey.pk)
+

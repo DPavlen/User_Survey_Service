@@ -1,8 +1,6 @@
 from django.db import models
-from django.contrib.auth import get_user_model
 
-
-User = get_user_model()
+from users.models import MyUser
 
 
 class Survey(models.Model):
@@ -66,10 +64,20 @@ class Answer(models.Model):
         max_length=255
     )
     text = models.TextField()
+    parent_question = models.ForeignKey(
+        "self", 
+        null=True, 
+        blank=True, 
+        on_delete=models.CASCADE
+    )
+    pub_date = models.DateTimeField(
+        "Дата ответа", 
+        auto_now_add=True
+    )
     author = models.ForeignKey(
-        User,
+        MyUser,
         on_delete=models.CASCADE,
-        verbose_name="Автор опросов",
+        verbose_name="Автор ответа",
         related_name="answers",
     )
     survey = models.ForeignKey(
@@ -88,6 +96,7 @@ class Answer(models.Model):
         related_name="answers",
         verbose_name="Вопрос",
     )
+
    
     def __str__(self):
         return self.title 

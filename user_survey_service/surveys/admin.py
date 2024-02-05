@@ -21,7 +21,7 @@ class QuestionAdmin(admin.ModelAdmin):
 
 @admin.register(Answer)
 class AnswerAdmin(admin.ModelAdmin):
-    list_display = ("pk","author", "title", "text")
+    list_display = ("pk","author", "title", "text", "parent_question")
     list_display_links = ("title", "author")
     search_fields = ("title",)
     empty_value_display = "-пусто-"
