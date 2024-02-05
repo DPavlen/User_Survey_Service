@@ -10,13 +10,14 @@
     <h1>Список опросов пользователей</h1> 
     {% for survey in page_obj %}
     <article>
+        <strong>Темы опроса:</strong><br>
         <ul>
           <li>
-            <strong>Заголовок опроса:</strong> {{ survey.title }}
+             {{ survey.title }}
           </li>
-          <li>
+          {% comment %} <li>
             <p>{{ survey.description }}</p>
-          </li>
+          </li> {% endcomment %}
         </ul>
     </article>
     {% endfor %}

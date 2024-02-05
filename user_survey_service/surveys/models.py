@@ -56,11 +56,12 @@ class Question(models.Model):
 
 class Answer(models.Model):
     """Модель ответов. 
-    У каждого ответа есть соотвествующий автор, опрос и вопрос.
+    У каждого ответа есть следующие атрибуты:
+    соотвествующий автор, опрос и вопрос.
     """
     title = models.CharField(
         "Ответ", 
-        unique=True,
+        # unique=True,
         max_length=255
     )
     text = models.TextField()
