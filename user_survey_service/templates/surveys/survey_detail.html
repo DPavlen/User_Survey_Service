@@ -10,8 +10,19 @@
     {% csrf_token %}
     {% for question in page_obj %}
       <h3>{{ question.title }}</h3>
-      <p>{{ question.description }}</p>
-      <input type="text" name="question_{{ question.id }}" required>
+      <p>{{ question.text }}</p>
+
+      {% if question.choices.exists %}
+        <!-- Радиокнопочки для выбора одного ответа из списка -->
+        {% for choice in question.choices.all %}
+          <input type="radio" id="choice_{{ choice.id }}" name="question_{{ question.id }}" value="{{ choice.id }}" required>
+          <label for="choice_{{ choice.id }}">{{ choice.text }}</label><br>
+        {% endfor %}
+      {% else %}
+        <!-- Если вопрос не имеет вариантов ответов, выводим текстовое поле -->
+        <input type="text" name="question_{{ question.id }}" required>
+      {% endif %}
+
     {% endfor %}
     <button type="submit">Отправить ответы</button>
   </form>

@@ -5,7 +5,7 @@ from django.views import View
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
-from surveys.models import Survey, Question, Answer
+from surveys.models import Survey, Question, Answer, Choice
 # from surveys.utils import paginator_context
 
 COUNT_POST = 10
@@ -45,9 +45,9 @@ class SurveySubmitView(View):
         """Получение ответа."""
         survey = get_object_or_404(Survey, pk=pk)
         questions = survey.questions.all()
-        page_obj = get_paginated_objects(questions, request)
+        # page_obj = get_paginated_objects(questions, request)
         context = {
-            'page_obj': page_obj,
+            'questions': questions,
             'survey': survey,
         }
         return render(request, "surveys/survey_submit.html", context)
@@ -61,17 +61,30 @@ class SurveySubmitView(View):
         """
         survey = get_object_or_404(Survey, pk=pk)
         questions = survey.questions.all()
-
         # Получаем ответы usera
         answers = []
         for question in questions:
             question_id = f"question_{question.id}"
-            answer_text = request.POST.get(question_id, "")
-            answer = Answer(
-                question=question, 
-                text=answer_text, 
-                survey=survey, 
-                author=request.user)
+            if question.choices.exists():
+                # Если вопрос имеет варианты ответов, сохраняем выбранный вариант
+                choice_id = request.POST.get(question_id)
+                choice = get_object_or_404(Choice, id=choice_id)
+                answer = Answer(
+                    question=question, 
+                    text=choice.text, 
+                    survey=survey, 
+                    author=request.user,
+                    choice=choice
+                )
+            else:
+                # Если вопрос не имеет вариантов ответов, сохраняем введенный текст
+                answer_text = request.POST.get(question_id, "")
+                answer = Answer(
+                    question=question, 
+                    text=answer_text, 
+                    survey=survey, 
+                    author=request.user
+                )
             answers.append(answer)
 
         try:
