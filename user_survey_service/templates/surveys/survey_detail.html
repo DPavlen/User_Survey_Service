@@ -8,6 +8,7 @@
   <h2>Вопрос, который интересует в опросе</h2>
   <form method="post" action="{% url 'surveys:survey_submit' pk=survey.pk %}">
     {% csrf_token %}
+    
     {% for question in page_obj %}
       <h3>{{ question.title }}</h3>
       <p>{{ question.text }}</p>
@@ -20,7 +21,8 @@
         {% endfor %}
       {% else %}
         <!-- Если вопрос не имеет вариантов ответов, выводим текстовое поле -->
-        <input type="text" name="question_{{ question.id }}" required>
+        <p>"Нет ответа на данный вопрос в базе данных!"</p>
+        {% comment %} <input type="text" name="question_{{ question.id }}" required> {% endcomment %}
       {% endif %}
 
     {% endfor %}

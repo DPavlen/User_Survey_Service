@@ -5,7 +5,7 @@ from users.models import MyUser
 
 class Survey(models.Model):
     """Модель опросов. 
-    У каждого опроса есть вопрос и ответ на него."""
+    У каждого опроса есть вопрос и ответы на него."""
     title = models.CharField(
         "Опрос", 
         unique=True,

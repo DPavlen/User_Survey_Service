@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block title %}Статистика результатов опроса{% endblock %}
+
+{% block header %}Статистика результатов опроса{% endblock %}
+
+{% block content %}
+  <h2>{{ survey.title }}</h2>
+
+  {% for question_text, answer_count, answer_percentage, option_stats in results %}
+    <div>
+      <h3>{{ question_text }}</h3>
+      <p>Количество ответов : {{ answer_count }}</p>
+      <p>Процент ответов: {{ answer_percentage }}%</p>
+
+      {% if option_stats %}
+        <ul>
+          {% for option_text, option_count, option_percentage in option_stats %}
+            <li>{{ option_text }} - {{ option_count }} ({{ option_percentage }}%)</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+    </div>
+  {% endfor %}
+
+{% endblock %}

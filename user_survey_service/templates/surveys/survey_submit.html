@@ -3,7 +3,7 @@
 {% block content %}
   <h1>Форма отправки ответов на опросы</h1>
   <form method="post" enctype="multipart/form-data" action="{% url 'surveys:survey_submit' pk=survey.pk %}">
-    {% csrf_token %}
+  {% csrf_token %}
     <!-- TODO -->
     <button type="submit">Отправить</button>
   </form>
