@@ -7,6 +7,6 @@ urlpatterns = [
     path("surveys/", views.survey_list, name="survey_list"),
     path("surveys/<int:pk>/", views.survey_detail_view, name="survey_detail"),
     path("surveys/<int:pk>/submit/", views.SurveySubmitView.as_view(), name="survey_submit"),
-    path('surveys/<int:pk>/results/', views.SurveyResultsStatistics.as_view(), 
-name='survey_results'),
+    path("surveys/<int:pk>/results/", views.SurveyResultsStatistics.as_view(), 
+name="survey_results"),
 ]

@@ -30,6 +30,7 @@ def survey_list(request):
 def survey_detail_view(request, pk):
     """Информация о деталях опросов и его вопросов."""
     survey = get_object_or_404(Survey, pk=pk)
+    # questions = survey.questions.raw()
     questions = survey.questions.all()
     page_obj = get_paginated_objects(questions, request)
     context = {
@@ -41,10 +42,16 @@ def survey_detail_view(request, pk):
 
 class SurveySubmitView(View):
     """Форма отправки ответов на опросы."""
-    def get(self, request, pk):
+    def get(self, request, pk, current_question_id=None):
         """Получение ответа."""
         survey = get_object_or_404(Survey, pk=pk)
         questions = survey.questions.filter(parent_question__isnull=True)
+        answered_questions = Answer.objects.filter(
+            survey=survey, author=request.user).values_list('question_id', flat=True)
+        # Фильтрация вопросов: только те, у которых нет родительского вопроса и на которые пользователь еще не ответил
+        questions = questions.exclude(id__in=answered_questions)
+
+
         context = {
             'questions': questions,
             'survey': survey,
@@ -60,28 +67,35 @@ class SurveySubmitView(View):
         """
         survey = get_object_or_404(Survey, pk=pk)
         questions = survey.questions.all()
-        # Получаем ответы usera
+        
+        # Фильтрация вопросов: только те, у которых нет родительского вопроса
+        questions = [question for question in questions if not question.parent_question]
+
+        # Получаем ответы пользователя
         answers = []
         for question in questions:
             question_id = f"question_{question.id}"
             if question.choices.exists():
                 # Если вопрос имеет варианты ответов, сохраняем выбранный вариант
                 choice_id = request.POST.get(question_id)
-                choice = get_object_or_404(Choice, id=choice_id)
-                answer_text = choice.text
+                if choice_id:
+                    choice = get_object_or_404(Choice, id=choice_id)
+                    answer = Answer(
+                        question=question, 
+                        author=request.user,
+                        choice=choice
+                    )
+                    answers.append(answer)
             else:
-                f"Нет ответа на данный вопрос в базе данных!"
-                # # Если вопрос не имеет вариантов ответов, сохраняем введенный текст
-                # answer_text = request.POST.get(question_id, "")
-
-            answer = Answer(
-                question=question, 
-                # title=choice.text,
-                # survey=survey, 
-                author=request.user,
-                choice=choice
-            )
-            answers.append(answer)
+                # Если вопрос не имеет вариантов ответов, добавляем соответствующий текст
+                answer_text = request.POST.get(question_id, "")
+                if answer_text:
+                    answer = Answer(
+                        question=question, 
+                        author=request.user,
+                        text=answer_text
+                    )
+                    answers.append(answer)
 
         try:
             Answer.objects.bulk_create(answers)
@@ -93,7 +107,7 @@ class SurveySubmitView(View):
         # Определение следующего вопроса
         next_question = None
         for question in questions:
-            if not question.parent_question or not question.parent_question_id is None:
+            if not question.parent_question_id:
                 next_question = question
                 break
             else:
@@ -114,31 +128,30 @@ class SurveySubmitView(View):
 
 
 class SurveyResultsStatistics(View):
-    """Отображение резултатов статистики."""
+    """Отображение результатов статистики."""
     def get(self, request, pk):
         survey = get_object_or_404(Survey, pk=pk)
         questions = survey.questions.all()
         results = []
-        #Подсчет общего числа участников определенного опроса
-        total_participants = Answer.objects.filter(survey=survey).count()
+
+        total_participants = Answer.objects.filter(question__survey=survey).count()
 
         for question in questions:
-            # Получение ответов для текущего вопроса и 
-            # подсчет количества ответов на текущий вопрос
-            answers = question.answer_set.filter(survey=survey)
+            answers = Answer.objects.filter(question=question, question__survey=survey)
             answer_count = answers.count()
             answer_percentage = 0
             if total_participants > 0:
                 answer_percentage = (answer_count / total_participants) * 100
 
-        option_stats = []
-        for option in question.option_set.all():
-            option_count = answers.filter(text=option.text).count()
-            option_percentage = 0
-            if total_participants > 0:
-                answer_percentage = (answer_count / total_participants) * 100
-            option_stats.append((option.text, option_count, option_percentage))
+            option_stats = []
+            for choice in question.choices.all():
+                option_count = answers.filter(choice=choice).count()
+                option_percentage = 0
+                if total_participants > 0:
+                    option_percentage = (option_count / total_participants) * 100
+                option_stats.append((choice.text, option_count, option_percentage))
 
-        results.append((question.text, answer_count, answer_percentage, option_stats))
+            results.append((question.title, answer_count, answer_percentage, option_stats))
 
-        return render(request, 'survey_results.html', {'survey': survey, 'results': results})
+        # return render(request, 'surveys:survey_results.html', {'survey': survey, 'results': results})
+        return render(request, 'surveys/survey_results.html', {'survey': survey, 'results': results})

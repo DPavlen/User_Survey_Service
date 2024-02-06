@@ -2,12 +2,11 @@
 <header>
   <nav class="navbar navbar-light" style="background-color: lightskyblue">
     <div class="container">
-        {% with request.resolver_match.view_name as view_name %}
+      <ul class="navbar-nav ml-auto">
         <li>
           Пользователь в системе: {{ user.username }}
         </li>
-        {% endwith %}
       </ul>
     </div>
   </nav>      
-</header> 
+</header>

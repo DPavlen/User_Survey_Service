@@ -5,6 +5,7 @@
 {% block header %}Статистика результатов опроса{% endblock %}
 
 {% block content %}
+<div style="margin-left: 40px;">
   <h2>{{ survey.title }}</h2>
 
   {% for question_text, answer_count, answer_percentage, option_stats in results %}
@@ -23,5 +24,8 @@
 
     </div>
   {% endfor %}
-
+  <a href="{% url 'surveys:survey_list' %}" class="btn btn-primary">
+    Вернуться на главную страницу
+  </a>
+</div>
 {% endblock %}

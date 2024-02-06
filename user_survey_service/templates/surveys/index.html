@@ -7,14 +7,16 @@
 
 {% block content %}
 <div class="container py-5">
-    <h1>Список опросов пользователей</h1> 
+    <h1 align="center">
+      <span style="color: navy;">Список тем для опросов пользователей</span>
+    </h1>
+    <br>
     {% for survey in page_obj %}
     <article>
-        <strong>Темы опроса:</strong><br>
         <ul>
-          <li>
-             {{ survey.title }}
-          </li>
+          <a href="{% url 'surveys:survey_detail' pk=survey.pk %}">
+            <h3><li> {{ survey.title }} </li> </h3>
+          </a>
           {% comment %} <li>
             <p>{{ survey.description }}</p>
           </li> {% endcomment %}
