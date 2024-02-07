@@ -3,3 +3,5 @@ requests==2.31.0
 sqlparse==0.4.4
 sorl-thumbnail==12.10.0
 django-bootstrap4==24.1
+django-autoslug==1.9.9
+transliterate==1.10.2

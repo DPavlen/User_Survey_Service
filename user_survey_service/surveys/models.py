@@ -1,6 +1,18 @@
 from django.db import models
+from django.db.models import UniqueConstraint
+from django.urls import reverse
+from autoslug import AutoSlugField
+from transliterate import translit
 
 from users.models import MyUser
+
+
+def get_slug(instance):
+    """Транслитерованный слаг для модели опросов."""
+    return translit(
+        instance.title, 
+        'ru', 
+        reversed=True)
 
 
 class Survey(models.Model):
@@ -15,11 +27,31 @@ class Survey(models.Model):
         "Полное описание опроса",
         max_length=255,
     )
-    slug = models.SlugField(
-        "Уникальный слаг опроса",
+    slug = AutoSlugField(
+        "Слаг опроса",
+        populate_from=get_slug,
         unique=True,
         max_length=155,
     )
+
+    def get_absolute_url(self):
+        """
+        Получение ссылки для html survey_detail со слагом опроса.
+        """
+        return reverse(
+            "surveys:survey_detail", 
+            kwargs={'slug': self.slug}
+        )
+    
+    def get_submit_url(self):
+        """
+        Получение ссылки для html survey_submit со слагом опроса.
+        """
+        return reverse(
+            "surveys:survey_submit", 
+            kwargs={'slug': self.slug}
+        )
+
 
     def __str__(self):
         return self.title
@@ -97,7 +129,12 @@ class Answer(models.Model):
     class Meta:
         verbose_name = "Ответ"
         verbose_name_plural = "Ответы"
-
+        constraints = [
+            UniqueConstraint(
+                fields=("question", "author"),
+                name="unique_question_author",
+            )
+        ]
 
 class Choice(models.Model):
     """Модель выбора варианат ответов к вопросам. 

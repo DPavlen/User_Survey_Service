@@ -27,14 +27,15 @@ def survey_list(request):
     }
     return render(request, "surveys/index.html", context)
 
-def survey_detail_view(request, pk):
+def survey_detail_view(request, survey_slug):
     """Информация о деталях опросов и его вопросов."""
-    survey = get_object_or_404(Survey, pk=pk)
+    survey = get_object_or_404(Survey, slug=survey_slug)
     # questions = survey.questions.raw()
     questions = survey.questions.all()
-    page_obj = get_paginated_objects(questions, request)
+    # page_obj = get_paginated_objects(questions, request)
     context = {
-        'page_obj': page_obj,
+        'questions': questions,
+        # 'page_obj': page_obj,
         'survey': survey,
     }
     return render(request, "surveys/survey_detail.html", context)
@@ -42,15 +43,14 @@ def survey_detail_view(request, pk):
 
 class SurveySubmitView(View):
     """Форма отправки ответов на опросы."""
-    def get(self, request, pk, current_question_id=None):
+    def get(self, request, survey_slug, current_question_id=None):
         """Получение ответа."""
-        survey = get_object_or_404(Survey, pk=pk)
+        survey = get_object_or_404(Survey, slug= survey_slug)
         questions = survey.questions.filter(parent_question__isnull=True)
         answered_questions = Answer.objects.filter(
             survey=survey, author=request.user).values_list('question_id', flat=True)
         # Фильтрация вопросов: только те, у которых нет родительского вопроса и на которые пользователь еще не ответил
         questions = questions.exclude(id__in=answered_questions)
-
 
         context = {
             'questions': questions,
@@ -58,14 +58,14 @@ class SurveySubmitView(View):
         }
         return render(request, "surveys/survey_submit.html", context)
 
-    def post(self, request, pk):
+    def post(self, request, survey_slug):
         """Создание ответа. 
         Сохранение ответа пользователя(необходимо выбирать из списка ответов!).
         Проверка наличия атрибута parent_question у предыдущего вопроса.
         Перенаправление на страницу со следующим вопросом(по дереву вопросов).
         Перенаправление на страницу со статистикой ответов на вопросы.
         """
-        survey = get_object_or_404(Survey, pk=pk)
+        survey = get_object_or_404(Survey, slug=survey_slug)
         questions = survey.questions.all()
         
         # Фильтрация вопросов: только те, у которых нет родительского вопроса
@@ -122,9 +122,9 @@ class SurveySubmitView(View):
                     break
 
         if next_question:
-            return redirect("surveys:survey_detail", pk=survey.pk)
+            return redirect("surveys:survey_detail", slug=survey_slug)
         else:
-            return redirect("surveys:survey_results", pk=survey.pk)
+            return redirect("surveys:survey_results", slug=survey_slug)
 
 
 class SurveyResultsStatistics(View):

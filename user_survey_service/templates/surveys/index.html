@@ -14,7 +14,7 @@
     {% for survey in page_obj %}
     <article>
         <ul>
-          <a href="{% url 'surveys:survey_detail' pk=survey.pk %}">
+          <a href="{% url 'surveys:survey_detail' survey_slug=survey.slug %}">
             <h3><li> {{ survey.title }} </li> </h3>
           </a>
           {% comment %} <li>

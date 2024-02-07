@@ -3,7 +3,8 @@
 {% block content %}
   <h1>Форма отправки ответов на опросы</h1>
   
-  <form method="post" enctype="multipart/form-data" action="{% url 'surveys:survey_submit' pk=survey.pk %}">
+  <form method="post" enctype="multipart/form-data" action="{% url 'surveys:survey_submit' slug=survey.slug  %}">
+  {% comment %} <form method="post" enctype="multipart/form-data" action="{% url 'surveys:survey_submit' pk=survey.pk %}"> {% endcomment %}
     {% csrf_token %}
     
     {% if question %}

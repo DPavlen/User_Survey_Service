@@ -12,10 +12,11 @@
     <span style="color: blue;"> "{{ survey.title }}"</span>
   </h2>
 
-  <form method="post" action="{% url 'surveys:survey_submit' pk=survey.pk %}">
+  <form method="post" action="{% url 'surveys:survey_submit' survey_slug=survey.slug %}">
     {% csrf_token %}
-    
-    {% for question in page_obj %}
+  
+    {% for question in questions %}
+      {% if question.parent_question_id is None %}
       <h3>{{ question.title }}</h3>
       <p>{{ question.text }}</p>
 
@@ -30,9 +31,9 @@
       {% else %}
         <!-- Если вопрос не имеет вариантов ответов, выводим текстовое поле -->
         <input type="text" name="question_{{ question.id }}" required>
+        {% endif %}
       {% endif %}
     {% endfor %}
-    {% comment %} <button type="submit">Отправить ответы</button> {% endcomment %}
   </form>
   <br>
   <a href="{% url 'surveys:survey_list' %}" class="btn btn-primary">
