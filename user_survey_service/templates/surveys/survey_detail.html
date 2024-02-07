@@ -5,44 +5,93 @@
 {% block header %}Последние обновления на сайте{% endblock %}
 
 {% block content %}
-<div style="margin-left: 40px;"> 
+<div style="margin-left: 40px; margin-right: 40px; color: #333;"> 
+    <h2 align="center">
+        <span style="color: navy;">Текущий Опрос:</span>
+        <span style="color: blue;"> "{{ survey.title }}"</span>
+    </h2>
+    <br>
+    <h4 align="left">
+        <span style="color: navy;">Тематика опроса:</span>
+        <span style="color: color;"> "{{ survey.description }}"</span>
+    </h4>
+    <br>
+    <a href="{{ question.get_next_question }}" class="btn btn-primary">
+        &rarr;  <strong>Перейти к вопросам опроса : "{{ survey.title }}"</strong>
+    </a>
+    <br>
+    <br>
+    <a href="{% url 'surveys:survey_list' %}" class="btn btn-secondary">
+        &larr;  <strong>Вернуться к выбору другой темы для опроса</strong>
+    </a>
+    <br>
+    <br>
+    <a href="{% url 'surveys:survey_results' survey_slug=survey.slug %}" class="btn btn-info">
+        &rarr; <strong>Посмотрите cтатистику результатов данного опроса: "{{ survey.title }}"</strong>
+    </a>
+    <br>
+    <br>
 
-  <h2 align="center">
-    <span style="color: navy;">Текущий Опрос:</span>
-    <span style="color: blue;"> "{{ survey.title }}"</span>
-  </h2>
+    <div id="questionsContainer">
+        <!-- Сюда будут загружаться вопросы -->
+    </div>
 
-  <form method="post" action="{% url 'surveys:survey_submit' survey_slug=survey.slug %}">
-    {% csrf_token %}
+    <button id="loadQuestionsBtn" class="btn btn-primary">
+        Загрузить вопросы
+    </button>
+
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script>
+      $(document).ready(function () {
+          $("#loadQuestionsBtn").click(function () {
+              var surveySlug = "{{ survey.slug }}";
   
-    {% for question in questions %}
-      {% if question.parent_question_id is None %}
-      <h3>{{ question.title }}</h3>
-      <p>{{ question.text }}</p>
-
-      {% if question.choices.exists %}
-        <!-- Радиокнопочки для выбора одного ответа из списка -->
-        {% for choice in question.choices.all %}
-          <input type="radio" id="choice_{{ choice.id }}" name="question_{{ question.id }}" value="{{ choice.id }}" required>
-          <label for="choice_{{ choice.id }}">{{ choice.text }}</label><br>
-        {% endfor %}
-        <button type="submit">Отправить ответы</button>
-          <br>
-      {% else %}
-        <!-- Если вопрос не имеет вариантов ответов, выводим текстовое поле -->
-        <input type="text" name="question_{{ question.id }}" required>
-        {% endif %}
-      {% endif %}
-    {% endfor %}
-  </form>
-  <br>
-  <a href="{% url 'surveys:survey_list' %}" class="btn btn-primary">
-    Вернуться к списку всех тем для опросов пользователей
-  </a>
-  <br>
-  <br>
-  <a href="{% url 'surveys:survey_results' pk=survey.pk %}" class="btn btn-primary">
-    Посмотрите Статистику результатов опроса
-  </a>
+              $.ajax({
+                  url: `/surveys/${surveySlug}/load_questions/`,
+                  method: "GET",
+                  success: function (data) {
+                      // Очищаем контейнер перед добавлением новых вопросов
+                      $("#questionsContainer").empty();
+  
+                      // Обработка полученных данных (например, вывод вопросов)
+                      if (data.questions.length > 0) {
+                          for (var i = 0; i < data.questions.length; i++) {
+                              var question = data.questions[i].fields;
+                              var questionHTML = "<div>";
+                              questionHTML += "<h3>" + question.title + "</h3>";
+                              questionHTML += "<p>" + question.text + "</p>";
+  
+                              // Обработка вариантов ответов
+                              if (question.choices && question.choices.length > 0) {
+                                  questionHTML += "<ul>";
+                                  for (var j = 0; j < question.choices.length; j++) {
+                                      questionHTML += "<li>" + question.choices[j].fields.text + "</li>";
+                                  }
+                                  questionHTML += "</ul>";
+                              }
+  
+                              questionHTML += "</div>";
+  
+                              // Добавляем вопрос в контейнер
+                              $("#questionsContainer").append(questionHTML);
+                          }
+  
+                          // Отображаем ссылку на следующий вопрос
+                          $("#nextQuestionLink").show();
+                      } else {
+                          // Если вопросов нет
+                          $("#questionsContainer").html("<p>Вопросов нет.</p>");
+                          
+                          // Скрываем ссылку на следующий вопрос
+                          $("#nextQuestionLink").hide();
+                      }
+                  },
+                  error: function (error) {
+                      console.error(error);
+                  }
+              });
+          });
+      });
+  </script>
 </div>
 {% endblock %}

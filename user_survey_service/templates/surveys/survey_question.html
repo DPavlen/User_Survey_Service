@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<form id="surveyForm" method="post" action="{% url 'surveys:survey_submit' survey_slug=survey.slug %}">
+    {% csrf_token %}
+    {% for question in questions %}
+        {% if question.parent_question_id is None %}
+            <h3>{{ question.title }}</h3>
+            <p>{{ question.text }}</p>
+
+            {% if question.choices.exists %}
+                <!-- Радиокнопочки для выбора одного ответа из списка -->
+                {% for choice in question.choices.all %}
+                    <input type="radio" id="choice_{{ choice.id }}" name="question_{{ question.id }}" value="{{ choice.id }}" required>
+                    <label for="choice_{{ choice.id }}">{{ choice.text }}</label><br>
+                {% endfor %}
+            {% else %}
+                <!-- Если вопрос не имеет вариантов ответов, выводим текстовое поле -->
+                <input type="text" name="question_{{ question.id }}" required>
+            {% endif %}
+        {% endif %}
+    {% endfor %}
+    
+    <button type="button" id="submitFormBtn">Отправить ответы</button>
+</form>
+{% endblock %}

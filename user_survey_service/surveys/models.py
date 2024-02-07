@@ -17,14 +17,10 @@ def get_slug(instance):
 
 class Survey(models.Model):
     """Модель опросов. 
-    У каждого опроса есть вопрос и ответы на него."""
+    В каждом опросе: вопросы и ответы на него."""
     title = models.CharField(
         "Опрос", 
         unique=True,
-        max_length=255,
-    )
-    description = models.CharField(
-        "Полное описание опроса",
         max_length=255,
     )
     slug = AutoSlugField(
@@ -33,7 +29,9 @@ class Survey(models.Model):
         unique=True,
         max_length=155,
     )
-
+    description = models.TextField(
+        "Тематика опроса",
+    )
     def get_absolute_url(self):
         """
         Получение ссылки для html survey_detail со слагом опроса.
@@ -49,6 +47,15 @@ class Survey(models.Model):
         """
         return reverse(
             "surveys:survey_submit", 
+            kwargs={'slug': self.slug}
+        )
+    
+    def get_submit_url(self):
+        """
+        Получение ссылки для html survey_results со слагом опроса.
+        """
+        return reverse(
+            "surveys:survey_results", 
             kwargs={'slug': self.slug}
         )
 
@@ -82,6 +89,24 @@ class Question(models.Model):
         blank=True, 
         on_delete=models.CASCADE
     )
+    slug = AutoSlugField(
+        "Слаг вопроса",
+        populate_from=get_slug,
+        unique=True,
+        max_length=155,
+    )
+    def get_next_question(self):
+        """
+        Возврат объекта следующего вопроса-родителя.
+        """
+        try:
+            next_question = Question.objects.get(
+                parent_question=None, order__gt=self.order, survey=self.survey
+            )
+            return next_question
+        except Question.DoesNotExist:
+            return None
+
    
     def __str__(self):
         return self.title
@@ -137,7 +162,7 @@ class Answer(models.Model):
         ]
 
 class Choice(models.Model):
-    """Модель выбора варианат ответов к вопросам. 
+    """Модель выбора варианта ответов к вопросам. 
     """
     question = models.ForeignKey(
         Question, 

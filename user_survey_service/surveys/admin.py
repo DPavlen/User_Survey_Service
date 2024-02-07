@@ -5,7 +5,7 @@ from surveys.models import Survey, Question, Answer, Choice
 
 @admin.register(Survey)
 class SurveyAdmin(admin.ModelAdmin):
-    list_display = ("pk", "title", "description", "slug")
+    list_display = ("pk", "title", "slug", "description")
     list_display_links = ("pk", "title",)
     search_fields = ("pk", "title",)
     empty_value_display = "-пусто-"
@@ -13,7 +13,7 @@ class SurveyAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ("pk", "title", "survey", "parent_question")
+    list_display = ("pk", "title", "survey", "parent_question", "slug")
     list_display_links = ("title",)
     search_fields = ("title",)
     empty_value_display = "-пусто-"

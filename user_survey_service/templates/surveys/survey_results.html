@@ -6,14 +6,16 @@
 
 {% block content %}
 <div style="margin-left: 40px;">
-  <h2>{{ survey.title }}</h2>
+  <h2 align="center">
+    <span style="color: navy;">Статистика ответов на вопросы. </span>
+  </h2>
+  <h4><span style="color: blue;">Тематика опроса: "{{ survey.title }}"</span></h4>
 
   {% for question_text, answer_count, answer_percentage, option_stats in results %}
     <div>
-      <h3>{{ question_text }}</h3>
+      <h4>{{ question_text }}</h4>
       <p>Количество ответов : {{ answer_count }}</p>
       <p>Процент ответов: {{ answer_percentage }}%</p>
-
       {% if option_stats %}
         <ul>
           {% for option_text, option_count, option_percentage in option_stats %}

@@ -14,7 +14,7 @@ class MyUser(AbstractUser):
         USER = "user"
         ADMIN = "admin"
 
-    REQUIRED_FIELDS = ["first_name", "last_name", "email"]
+    # REQUIRED_FIELDS = ["first_name", "last_name", "email"]
 
     email = models.EmailField(
         max_length=255,

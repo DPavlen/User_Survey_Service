@@ -1,6 +1,8 @@
+import json
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.http import HttpResponseServerError
+from django.core.serializers import serialize
+from django.http import HttpResponseServerError, JsonResponse
 from django.views import View
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -39,6 +41,19 @@ def survey_detail_view(request, survey_slug):
         'survey': survey,
     }
     return render(request, "surveys/survey_detail.html", context)
+
+
+def load_questions(request, survey_slug):
+    """
+    Представление обрабатываемое AJAX-запросами и возврат данных в формате JSON.
+    """
+    survey = get_object_or_404(Survey, slug=survey_slug)
+    top_level_questions = survey.questions.filter(parent_question=None)
+    
+    # Используем json.dumps для корректной сериализации
+    serialized_data = serialize('json', top_level_questions, fields=('id', 'title', 'text'))
+    
+    return JsonResponse({'questions': serialized_data}, safe=False)
 
 
 class SurveySubmitView(View):
@@ -122,15 +137,15 @@ class SurveySubmitView(View):
                     break
 
         if next_question:
-            return redirect("surveys:survey_detail", slug=survey_slug)
+            return redirect("surveys:survey_detail", survey_slug=survey_slug)
         else:
-            return redirect("surveys:survey_results", slug=survey_slug)
+            return redirect("surveys:survey_results", survey_slug=survey_slug)
 
 
 class SurveyResultsStatistics(View):
     """Отображение результатов статистики."""
-    def get(self, request, pk):
-        survey = get_object_or_404(Survey, pk=pk)
+    def get(self, request, survey_slug):
+        survey = get_object_or_404(Survey, slug=survey_slug)
         questions = survey.questions.all()
         results = []
 
@@ -142,7 +157,7 @@ class SurveyResultsStatistics(View):
             answer_percentage = 0
             if total_participants > 0:
                 answer_percentage = (answer_count / total_participants) * 100
-
+              
             option_stats = []
             for choice in question.choices.all():
                 option_count = answers.filter(choice=choice).count()
@@ -153,5 +168,4 @@ class SurveyResultsStatistics(View):
 
             results.append((question.title, answer_count, answer_percentage, option_stats))
 
-        # return render(request, 'surveys:survey_results.html', {'survey': survey, 'results': results})
         return render(request, 'surveys/survey_results.html', {'survey': survey, 'results': results})
