@@ -10,16 +10,17 @@ from users.models import MyUser
 def get_slug(instance):
     """Транслитерованный слаг для модели опросов."""
     return translit(
-        instance.title, 
-        'ru', 
+        instance.title,
+        'ru',
         reversed=True)
 
 
 class Survey(models.Model):
     """Модель опросов. 
-    В каждом опросе: вопросы и ответы на него."""
+    В каждом опросе вопросы и ответы на него."""
+    objects = None
     title = models.CharField(
-        "Опрос", 
+        "Опрос",
         unique=True,
         max_length=255,
     )
@@ -32,33 +33,33 @@ class Survey(models.Model):
     description = models.TextField(
         "Тематика опроса",
     )
-    def get_absolute_url(self):
+
+    def get_detail_url(self):
         """
         Получение ссылки для html survey_detail со слагом опроса.
         """
         return reverse(
-            "surveys:survey_detail", 
+            "surveys:survey_detail",
             kwargs={'slug': self.slug}
         )
-    
+
     def get_submit_url(self):
         """
         Получение ссылки для html survey_submit со слагом опроса.
         """
         return reverse(
-            "surveys:survey_submit", 
+            "surveys:survey_submit",
             kwargs={'slug': self.slug}
         )
-    
-    def get_submit_url(self):
+
+    def get_results_url(self):
         """
         Получение ссылки для html survey_results со слагом опроса.
         """
         return reverse(
-            "surveys:survey_results", 
+            "surveys:survey_results",
             kwargs={'slug': self.slug}
         )
-
 
     def __str__(self):
         return self.title
@@ -70,13 +71,14 @@ class Survey(models.Model):
 
 class Question(models.Model):
     """Модель вопросов. Вопрос связан с одним опросом."""
+    DoesNotExist = None
     title = models.CharField(
-        "Вопрос", 
+        "Вопрос",
         unique=True,
         max_length=255
     )
     survey = models.ForeignKey(
-        Survey, 
+        Survey,
         on_delete=models.CASCADE,
         blank=True,
         null=True,
@@ -84,9 +86,9 @@ class Question(models.Model):
         verbose_name="Опрос",
     )
     parent_question = models.ForeignKey(
-        "self", 
-        null=True, 
-        blank=True, 
+        "self",
+        null=True,
+        blank=True,
         on_delete=models.CASCADE
     )
     slug = AutoSlugField(
@@ -95,19 +97,35 @@ class Question(models.Model):
         unique=True,
         max_length=155,
     )
+
     def get_next_question(self):
         """
         Возврат объекта следующего вопроса-родителя.
         """
         try:
-            next_question = Question.objects.get(
+            next_question = Question.objects.filter(
                 parent_question=None, order__gt=self.order, survey=self.survey
-            )
+            ).order_by('order').first()
             return next_question
         except Question.DoesNotExist:
             return None
 
-   
+    def get_survey_question_url(self):
+        """
+        Получение ссылки для html survey_question со слагами опроса и вопроса.
+        """
+        survey_slug = self.survey.slug
+        question_slug = self.slug
+        if question_slug:
+            return reverse(
+                "surveys:survey_question",
+                kwargs={'survey_slug': survey_slug,
+                        'question_slug': question_slug}
+            )
+        else:
+            # Если question_slug пустой или не определен, возвращаем пустую строку или другое значение по вашему усмотрению
+            return ""
+
     def __str__(self):
         return self.title
 
@@ -122,11 +140,11 @@ class Answer(models.Model):
     соотвествующий автор, опрос и вопрос.
     """
     pub_date = models.DateTimeField(
-        "Дата ответа", 
+        "Дата ответа",
         auto_now_add=True
     )
     question = models.ForeignKey(
-        Question, 
+        Question,
         on_delete=models.CASCADE,
         blank=True,
         null=True,
@@ -161,22 +179,23 @@ class Answer(models.Model):
             )
         ]
 
+
 class Choice(models.Model):
     """Модель выбора варианта ответов к вопросам. 
     """
     question = models.ForeignKey(
-        Question, 
+        Question,
         on_delete=models.CASCADE,
         related_name="choices",
         verbose_name="Выбор",
     )
     text = models.CharField(
-        "Текст варианта ответа", 
+        "Текст варианта ответа",
         max_length=255
     )
 
     def __str__(self):
-        return self.text 
+        return self.text
 
     class Meta:
         verbose_name = "Выбор варианта ответа"

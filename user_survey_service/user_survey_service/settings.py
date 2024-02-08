@@ -13,6 +13,8 @@ SECRET_KEY = "django-insecure-wt_&97c75@40q=0w_(u&$eg0*2$9)y!u__@2wjn#08_hpkzhr(
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+# DEBUG = False
+
 
 ALLOWED_HOSTS = []
 
@@ -23,6 +25,7 @@ INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
+    "django_extensions",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
@@ -120,3 +123,6 @@ STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Слаг для склейки опроса и вопроса
+AUTOSLUG_SLUGIFY_FUNCTION = 'slugify.slugify'

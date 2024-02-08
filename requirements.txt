@@ -4,4 +4,7 @@ sqlparse==0.4.4
 sorl-thumbnail==12.10.0
 django-bootstrap4==24.1
 django-autoslug==1.9.9
+django-extensions==3.2.3
+debugpy==1.8.0
 transliterate==1.10.2
+python-slugify==8.0.4

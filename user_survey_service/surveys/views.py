@@ -1,13 +1,14 @@
-import json
-from django.contrib.auth.decorators import login_required
+# from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.core.serializers import serialize
 from django.http import HttpResponseServerError, JsonResponse
-from django.views import View
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.views import View
 
-from surveys.models import Survey, Question, Answer, Choice
+from .models import Survey, Question, Choice, Answer
+
+# import models
 # from surveys.utils import paginator_context
 
 COUNT_POST = 10
@@ -30,13 +31,15 @@ def survey_list(request):
     return render(request, "surveys/index.html", context)
 
 def survey_detail_view(request, survey_slug):
-    """Информация о деталях опросов и его вопросов."""
+    """
+    Информация о деталях опросов и его вопросов.
+    """
     survey = get_object_or_404(Survey, slug=survey_slug)
     # questions = survey.questions.raw()
-    questions = survey.questions.all()
+    # questions = survey.questions.all()
     # page_obj = get_paginated_objects(questions, request)
     context = {
-        'questions': questions,
+        # 'questions': questions,
         # 'page_obj': page_obj,
         'survey': survey,
     }
@@ -56,22 +59,64 @@ def load_questions(request, survey_slug):
     return JsonResponse({'questions': serialized_data}, safe=False)
 
 
-class SurveySubmitView(View):
+class SurveyQuestion(View):
     """Форма отправки ответов на опросы."""
-    def get(self, request, survey_slug, current_question_id=None):
-        """Получение ответа."""
-        survey = get_object_or_404(Survey, slug= survey_slug)
-        questions = survey.questions.filter(parent_question__isnull=True)
-        answered_questions = Answer.objects.filter(
-            survey=survey, author=request.user).values_list('question_id', flat=True)
-        # Фильтрация вопросов: только те, у которых нет родительского вопроса и на которые пользователь еще не ответил
-        questions = questions.exclude(id__in=answered_questions)
+    def get(self, request, survey_slug, question_slug):
+        survey = get_object_or_404(Survey, slug=survey_slug)
+        # Получаем вопрос, у которого parent_question равен None
+        question = get_object_or_404(
+            Question,
+            survey=survey, 
+            slug=question_slug, 
+            parent_question__isnull=True
+        )
+        # Используем метод get_survey_question_url для получения URL
+        survey_question_url = question.get_survey_question_url()
+
+        # Получаем следующий вопрос
+        next_question = question.get_next_question()
+
+        # Если есть следующий вопрос, формируем URL и переходим на него
+        if next_question:
+            next_question_url = next_question.get_survey_question_url()
+            return redirect(next_question_url)
 
         context = {
-            'questions': questions,
             'survey': survey,
+            'question': question,
+            'survey_question_url': survey_question_url,
+            'next_question': next_question,
         }
-        return render(request, "surveys/survey_submit.html", context)
+        print(context)
+        # Добавим проверку на наличие следующего вопроса перед передачей в контекст
+        # if next_question:
+        #     context['next_question_url'] = next_question.get_survey_question_url()
+
+        return render(request, 'surveys/survey_question.html', context)
+
+
+
+class SurveySubmitView(View):
+    """Форма отправки ответов на опросы."""
+    def get(self, request, survey_slug, question_slug):
+        """Получение текущего опроса и переход к вопросу."""
+        survey = get_object_or_404(Survey, slug=survey_slug)
+        question = get_object_or_404(Question, survey=survey, slug=question_slug)
+
+        next_question = self.get_next_question(survey, question.order)
+
+        context = {
+            'survey': survey,
+            'question': question,
+            'next_question': next_question,
+            'next_question_url': self.get_survey_question_url(survey_slug, next_question.slug) if next_question else None,
+        }
+        return render(request, 'surveys/survey_question.html', context)
+
+    def get_survey_question_url(self, survey_slug, question_slug):
+        """Получение URL для следующего вопроса."""
+        return reverse("surveys:survey_submit", kwargs={'survey_slug': survey_slug, 'question_slug': question_slug})
+
 
     def post(self, request, survey_slug):
         """Создание ответа. 

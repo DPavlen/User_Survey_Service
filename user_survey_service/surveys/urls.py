@@ -1,5 +1,5 @@
 from django.urls import path
-from surveys import views
+from . import views
 
 app_name = "surveys"
 
@@ -9,6 +9,8 @@ urlpatterns = [
     path("surveys/<slug:survey_slug>/results/", views.SurveyResultsStatistics.as_view(), name="survey_results"),
     # Ajax загрузка вопросов
     path("surveys/<slug:survey_slug>/load_questions/", views.load_questions, name="load_questions"),
-    # path("surveys/<slug:survey_slug>/<slug:question_slug>/", views.SurveyQuestionView.as_view(), name="survey_question"),
+    # Ответы на вопросы
+    path("surveys/<slug:survey_slug>/<slug:question_slug>/", views.SurveyQuestion.as_view(), name="survey_question"),
+    # path("surveys/<slug:survey_slug>/<slug:question_slug>/", views.SurveySubmitView.as_view(), name="survey_question"),
     path("surveys/<slug:survey_slug>/submit/", views.SurveySubmitView.as_view(), name="survey_submit"),
 ]

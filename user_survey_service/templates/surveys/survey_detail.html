@@ -19,7 +19,16 @@
     <a href="{{ question.get_next_question }}" class="btn btn-primary">
         &rarr;  <strong>Перейти к вопросам опроса : "{{ survey.title }}"</strong>
     </a>
+{#    <a href="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=next_question.slug %}">#}
+{#        !!!!Перейти к следующему вопросу#}
+{#    </a>#}
+{#    <a href="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=question.slug %}">#}
+{#    Перейти к вопросу#}
+{#    </a>#}
     <br>
+    {% comment %} <a href="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=next_question_url %}">
+        Перейти к вопросу!!!!
+    </a> {% endcomment %}
     <br>
     <a href="{% url 'surveys:survey_list' %}" class="btn btn-secondary">
         &larr;  <strong>Вернуться к выбору другой темы для опроса</strong>
@@ -42,56 +51,56 @@
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script>
-      $(document).ready(function () {
-          $("#loadQuestionsBtn").click(function () {
-              var surveySlug = "{{ survey.slug }}";
-  
-              $.ajax({
-                  url: `/surveys/${surveySlug}/load_questions/`,
-                  method: "GET",
-                  success: function (data) {
-                      // Очищаем контейнер перед добавлением новых вопросов
-                      $("#questionsContainer").empty();
-  
-                      // Обработка полученных данных (например, вывод вопросов)
-                      if (data.questions.length > 0) {
-                          for (var i = 0; i < data.questions.length; i++) {
-                              var question = data.questions[i].fields;
-                              var questionHTML = "<div>";
-                              questionHTML += "<h3>" + question.title + "</h3>";
-                              questionHTML += "<p>" + question.text + "</p>";
-  
-                              // Обработка вариантов ответов
-                              if (question.choices && question.choices.length > 0) {
-                                  questionHTML += "<ul>";
-                                  for (var j = 0; j < question.choices.length; j++) {
-                                      questionHTML += "<li>" + question.choices[j].fields.text + "</li>";
-                                  }
-                                  questionHTML += "</ul>";
-                              }
-  
-                              questionHTML += "</div>";
-  
-                              // Добавляем вопрос в контейнер
-                              $("#questionsContainer").append(questionHTML);
-                          }
-  
-                          // Отображаем ссылку на следующий вопрос
-                          $("#nextQuestionLink").show();
-                      } else {
-                          // Если вопросов нет
-                          $("#questionsContainer").html("<p>Вопросов нет.</p>");
-                          
-                          // Скрываем ссылку на следующий вопрос
-                          $("#nextQuestionLink").hide();
-                      }
-                  },
-                  error: function (error) {
-                      console.error(error);
-                  }
-              });
-          });
-      });
-  </script>
+        $(document).ready(function () {
+            $("#loadQuestionsBtn").click(function () {
+                var surveySlug = "{{ survey.slug }}";
+    
+                $.ajax({
+                    url: `/surveys/${surveySlug}/load_questions/`,
+                    method: "GET",
+                    success: function (data) {
+                        // Очищаем контейнер перед добавлением новых вопросов
+                        $("#questionsContainer").empty();
+    
+                        // Обработка полученных данных (например, вывод вопросов)
+                        if (Array.isArray(data.questions) && data.questions.length > 0) {
+                            data.questions.forEach(function (questionData) {
+                                var question = questionData.fields;
+                                var questionHTML = `<div>
+                                    <h3>${question.title || 'No title available'}</h3>`;
+                                {% comment %} questionHTML += `<p>${question.text}</p>`; {% endcomment %}
+    
+                                // Обработка вариантов ответов
+                                if (question.choices && question.choices.length > 0) {
+                                    questionHTML += "<ul>";
+                                    question.choices.forEach(function (choice) {
+                                        questionHTML += `<li>${choice.fields.text}</li>`;
+                                    });
+                                    questionHTML += "</ul>";
+                                }
+    
+                                questionHTML += "</div>";
+    
+                                // Добавляем вопрос в контейнер
+                                $("#questionsContainer").append(questionHTML);
+                            });
+    
+                            // Отображаем ссылку на следующий вопрос
+                            $("#nextQuestionLink").show();
+                        } else {
+                            // Если вопросов нет
+                            $("#questionsContainer").html("<p>Вопросов нет.</p>");
+    
+                            // Скрываем ссылку на следующий вопрос
+                            $("#nextQuestionLink").hide();
+                        }
+                    },
+                    error: function (error) {
+                        console.error(error);
+                    }
+                });
+            });
+        });
+    </script>
 </div>
 {% endblock %}
