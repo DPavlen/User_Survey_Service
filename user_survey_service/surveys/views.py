@@ -35,13 +35,14 @@ def survey_detail_view(request, survey_slug):
     Информация о деталях опросов и его вопросов.
     """
     survey = get_object_or_404(Survey, slug=survey_slug)
+    parent_question = survey.questions.filter(parent_question__isnull=False)
     # questions = survey.questions.raw()
     # questions = survey.questions.all()
     # page_obj = get_paginated_objects(questions, request)
     context = {
-        # 'questions': questions,
-        # 'page_obj': page_obj,
         'survey': survey,
+        'parent_question': 'parent_question',
+        # 'page_obj': page_obj,
     }
     return render(request, "surveys/survey_detail.html", context)
 
@@ -51,11 +52,14 @@ def load_questions(request, survey_slug):
     Представление обрабатываемое AJAX-запросами и возврат данных в формате JSON.
     """
     survey = get_object_or_404(Survey, slug=survey_slug)
-    top_level_questions = survey.questions.filter(parent_question=None)
+    questions = survey.questions.all()
     
     # Используем json.dumps для корректной сериализации
-    serialized_data = serialize('json', top_level_questions, fields=('id', 'title', 'text'))
-    
+    serialized_data = serialize(
+        'json',
+        questions,
+        fields=('id', 'title', 'text', 'slug', 'parent_question'))
+
     return JsonResponse({'questions': serialized_data}, safe=False)
 
 
@@ -213,4 +217,8 @@ class SurveyResultsStatistics(View):
 
             results.append((question.title, answer_count, answer_percentage, option_stats))
 
-        return render(request, 'surveys/survey_results.html', {'survey': survey, 'results': results})
+        return render(
+            request,
+            'surveys/survey_results.html',
+            {'survey': survey, 'results': results}
+        )
