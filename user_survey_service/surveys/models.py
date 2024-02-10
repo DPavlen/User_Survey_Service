@@ -98,17 +98,17 @@ class Question(models.Model):
         max_length=155,
     )
 
-    def get_next_question(self):
-        """
-        Возврат объекта следующего вопроса-родителя.
-        """
-        try:
-            next_question = Question.objects.filter(
-                parent_question=None, order__gt=self.order, survey=self.survey
-            ).order_by('order').first()
-            return next_question
-        except Question.DoesNotExist:
-            return None
+    # def get_next_question(self):
+    #     """
+    #     Возврат объекта следующего вопроса-родителя.
+    #     """
+    #     try:
+    #         next_question = Question.objects.filter(
+    #             parent_question=None, order__gt=self.order, survey=self.survey
+    #         ).order_by('order').first()
+    #         return next_question
+    #     except Question.DoesNotExist:
+    #         return None
 
     def get_survey_question_url(self):
         """

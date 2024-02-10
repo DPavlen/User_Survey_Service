@@ -45,6 +45,7 @@ def survey_detail_view(request, survey_slug):
     context = {
         'survey': survey,
         'parent_question': parent_question.slug if parent_question else None,
+        'next_question_url': next_question_url,
     }
     print(context)
     return render(request, "surveys/survey_detail.html", context)
@@ -69,30 +70,32 @@ def load_questions(request, survey_slug):
 class SurveyQuestion(View):
     """Форма отправки ответов на опросы."""
     def get(self, request, survey_slug, question_slug):
+        print('QQQQQQQ')
         survey = get_object_or_404(Survey, slug=survey_slug)
+        print(survey)
         # Получаем вопрос, у которого parent_question равен None
         question = get_object_or_404(
             Question,
-            survey=survey, 
-            slug=question_slug, 
+            survey=survey,
             parent_question__isnull=True
         )
-        # Используем метод get_survey_question_url для получения URL
-        survey_question_url = question.get_survey_question_url()
-
-        # Получаем следующий вопрос
-        next_question = question.get_next_question()
-
-        # Если есть следующий вопрос, формируем URL и переходим на него
-        if next_question:
-            next_question_url = next_question.get_survey_question_url()
-            return redirect(next_question_url)
+        print('QQQQQQQ')
+        # # Используем метод get_survey_question_url для получения URL
+        # survey_question_url = question.get_survey_question_url()
+        #
+        # # Получаем следующий вопрос
+        # next_question = question.get_next_question()
+        #
+        # # Если есть следующий вопрос, формируем URL и переходим на него
+        # if next_question:
+        #     next_question_url = next_question.get_survey_question_url()
+        #     return redirect(next_question_url)
 
         context = {
             'survey': survey,
             'question': question,
-            'survey_question_url': survey_question_url,
-            'next_question': next_question,
+            # 'survey_question_url': survey_question_url,
+            # 'next_question': next_question,
         }
         print(context)
         # Добавим проверку на наличие следующего вопроса перед передачей в контекст

@@ -20,7 +20,7 @@
             {% endif %}
         {% endif %}
     {% endfor %}
-    
+
     <button type="button" id="submitFormBtn">Отправить ответы</button>
 </form>
 {% endblock %}
@@ -30,7 +30,7 @@
 
  {% comment %} <form method="post" action="{% url 'surveys:survey_submit' survey_slug=survey.slug %}">
     {% csrf_token %}
-  
+
     {% for question in questions %}
       {% if question.parent_question_id is None %}
       <h3>{{ question.title }}</h3>

@@ -16,9 +16,9 @@
         <span style="color: color;"> "{{ survey.description }}"</span>
     </h4>
     <br>
-    <a href="{{ question.get_next_question }}" class="btn btn-primary">
-        &rarr;  <strong>Перейти к вопросам опроса : "{{ survey.title }}"</strong>
-    </a>
+{#    <a href="{{ question.get_next_question }}" class="btn btn-primary">#}
+{#        &rarr;  <strong>Перейти к вопросам опроса : "{{ survey.title }}"</strong>#}
+{#    </a>#}
     <a href="{{ next_question_url }}">
     !!!!Перейти к следующему вопросу
     </a>
@@ -56,15 +56,16 @@
             let surveySlug = encodeURIComponent("{{ survey.slug }}");
 
             $.ajax({
-                url: `/surveys/${surveySlug}/load_questions/`,
+                {#url: `/surveys/${surveySlug}/load_questions/`,#}
+                url: `/surveys/${surveySlug}/load_questions/question/`,
                 method: "GET",
                 success: function (data) {
                     // Очищаем контейнер перед добавлением новых вопросов
                     let questionsContainer = $("#questionsContainer");
                     questionsContainer.empty();
 
-                    // Обработка полученных данных (например, вывод вопросов)
-                    if (Array.isArray(data.questions) && data.questions.length > 0) {
+                    // Проверка на массив
+                    if (Array.isArray(data.questions)) {
                         data.questions.forEach(function (questionData) {
                             let question = questionData.fields;
                             let questionHTML = `<div>
@@ -87,12 +88,14 @@
 
                         // Отображаем ссылку на следующий вопрос
                         $("#nextQuestionLink").show();
+
                     } else {
                         // Если вопросов нет
                         questionsContainer.html("<p>Вопросов нет.</p>");
 
                         // Скрываем ссылку на следующий вопрос
                         $("#nextQuestionLink").hide();
+                        console.error("Data is not in the expected format.");
                     }
                 },
                 error: function (xhr, status, error) {
@@ -103,9 +106,10 @@
 
         // Добавляем обработчик клика на ссылку
         $("#nextQuestionLink").click(function () {
-            console.log("Clicked on the link"); // Проверка, что обработчик срабатывает
             let surveySlug = $("#nextQuestionLink").data("survey-slug");
             let questionSlug = $("#nextQuestionLink").data("question-slug");
+
+            console.log("Clicked on the link");
             console.log("Survey Slug:", surveySlug);
             console.log("Question Slug:", questionSlug);
 
