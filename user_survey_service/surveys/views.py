@@ -35,15 +35,18 @@ def survey_detail_view(request, survey_slug):
     Информация о деталях опросов и его вопросов.
     """
     survey = get_object_or_404(Survey, slug=survey_slug)
-    parent_question = survey.questions.filter(parent_question__isnull=False)
-    # questions = survey.questions.raw()
-    # questions = survey.questions.all()
-    # page_obj = get_paginated_objects(questions, request)
+    parent_question = survey.questions.filter(parent_question__isnull=False).first()
+    if parent_question:
+        next_question_url = reverse('surveys:survey_question',
+                                    kwargs={'survey_slug': survey.slug,
+                                            'question_slug': parent_question.slug})
+    else:
+        next_question_url = None
     context = {
         'survey': survey,
-        'parent_question': 'parent_question',
-        # 'page_obj': page_obj,
+        'parent_question': parent_question.slug if parent_question else None,
     }
+    print(context)
     return render(request, "surveys/survey_detail.html", context)
 
 
