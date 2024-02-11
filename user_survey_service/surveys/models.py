@@ -89,7 +89,8 @@ class Question(models.Model):
         "self",
         null=True,
         blank=True,
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
+        related_name="child_questions",
     )
     slug = AutoSlugField(
         "Слаг вопроса",

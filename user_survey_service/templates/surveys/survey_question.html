@@ -1,7 +1,13 @@
 {% extends 'base.html' %}
+{#<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>#}
 
 {% block content %}
     <h2 align="center" style="color: navy;">Текущий Опрос: {{ survey.title }}</h2>
+    {% if user.is_authenticated %}
+    Привет, {{ user.username }}!
+    {% else %}
+        Пожалуйста, войдите.
+    {% endif %}
     <div style="margin-left: 40px; margin-right: 40px; color: #333;">
         <form id="surveyForm" method="post" action="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=question.slug %}">
             {% csrf_token %}
@@ -20,16 +26,20 @@
                 <input type="text" name="question_{{ question.id }}" required>
             {% endif %}
 
-            <button type="submit">Отправить выбранный ответ</button>
+            <button type="submit" id="submitFormBtn">Отправить выбранный ответ</button>
         </form>
     </div>
-
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script>
-        $(document).ready(function () {
-            // Исправляем обработчик клика на кнопку с правильным id
-            $("#submitFormBtn").click(function () {
-                $("#surveyForm").submit(); // Вызываем метод submit формы
-            });
+    $(document).ready(function () {
+        // Добавляем обработчик события submit формы
+        $("#surveyForm").submit(function (event) {
+            // Отменяем стандартное поведение формы
+            event.preventDefault();
+
+            // Вызываем метод submit формы
+            $(this).unbind('submit').submit();
         });
+    });
     </script>
 {% endblock %}
