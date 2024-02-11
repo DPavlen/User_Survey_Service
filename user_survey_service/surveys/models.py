@@ -139,6 +139,7 @@ class Answer(models.Model):
     У каждого ответа есть следующие атрибуты:
     соотвествующий автор, опрос и вопрос.
     """
+    objects = None
     pub_date = models.DateTimeField(
         "Дата ответа",
         auto_now_add=True
