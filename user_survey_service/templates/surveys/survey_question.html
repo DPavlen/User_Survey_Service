@@ -1,10 +1,8 @@
 {% extends 'base.html' %}
-{#<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>#}
-
 {% block content %}
     <h2 align="center" style="color: navy;">Текущий Опрос: {{ survey.title }}</h2>
     {% if user.is_authenticated %}
-    Привет, {{ user.username }}!
+        Привет, {{ user.username }}!
     {% else %}
         Пожалуйста, войдите.
     {% endif %}
@@ -29,17 +27,27 @@
             <button type="submit" id="submitFormBtn">Отправить выбранный ответ</button>
         </form>
     </div>
+
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script>
-    $(document).ready(function () {
-        // Добавляем обработчик события submit формы
-        $("#surveyForm").submit(function (event) {
-            // Отменяем стандартное поведение формы
-            event.preventDefault();
+        $(document).ready(function () {
+            // Добавляем обработчик события submit формы
+            $("#surveyForm").submit(function (event) {
+                // Отменяем стандартное поведение формы
+                event.preventDefault();
 
-            // Вызываем метод submit формы
-            $(this).unbind('submit').submit();
+                // Вызываем метод submit формы
+                $(this).unbind('submit').submit();
+            });
+
+            // Добавляем обработчик для обработки JSON-ответа после успешной отправки формы
+            $(document).ajaxComplete(function (event, xhr, settings) {
+                var jsonResponse = JSON.parse(xhr.responseText);
+                if (jsonResponse.redirect) {
+                    // Используем window.location.href для перенаправления на новую страницу
+                    window.location.href = jsonResponse.redirect;
+                }
+            });
         });
-    });
     </script>
 {% endblock %}

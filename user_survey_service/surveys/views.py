@@ -37,7 +37,7 @@ def survey_detail_view(request, survey_slug):
     Вычисляем первый вопрос у которого нет родителя и передаем в контекст.
     """
     survey = get_object_or_404(Survey, slug=survey_slug)
-    parent_question = survey.questions.filter(parent_question__isnull=False).first()
+    parent_question = survey.questions.filter(parent_question__isnull=True).first()
     if parent_question:
         next_question_url = reverse('surveys:survey_question',
                                     kwargs={'survey_slug': survey.slug,
@@ -82,7 +82,7 @@ class SurveyQuestion(View):
             'survey': survey,
             'question': question,
             'user': request.user,
-            # 'next_question': next_question,
+
         }
         print("1-й вопрос")
         print(context)
@@ -141,24 +141,26 @@ class SurveyQuestion(View):
             # Определение следующего вопроса
             next_question = None
             if parent_answer and parent_answer.question.child_questions.exists():
-                # Если есть дочерние вопросы у предыдущего вопроса, выберем первый из них
                 next_question = parent_answer.question.child_questions.first()
-                print("Next question:", next_question)
+                print("Next question from child_questions:", next_question)
             elif survey.questions.filter(parent_question=question).exists():
-                # Если у текущего вопроса есть дочерние вопросы, выберем первый из них
                 next_question = survey.questions.filter(parent_question=question).first()
-
-            print("Следующий вопрос:", next_question)
+                print("Next question from filter:", next_question)
 
             if next_question:
-                # Перенаправляем на следующий вопрос, а не на текущий вопрос
-                # return redirect("surveys:survey_question", survey_slug=survey_slug, question_slug=next_question.slug)
                 redirect_url = reverse("surveys:survey_question", args=[survey_slug, next_question.slug])
+                print("Redirect URL:", redirect_url)
+                return redirect(redirect_url)
             else:
-                # Перенаправляем на страницу со статистикой
-                return redirect("surveys:survey_results", survey_slug=survey_slug)
+                redirect_url = reverse("surveys:survey_results", args=[survey_slug])
+            print("Redirect URL:", redirect_url)
+            return redirect(redirect_url)
+            # else:
+            #     # Перенаправляем на страницу со статистикой
+            #     redirect_url = reverse("surveys:survey_results", args=[survey_slug])
+            #     return JsonResponse({'redirect': redirect_url})
 
-            return JsonResponse({'redirect': redirect_url})
+            # return JsonResponse({'redirect': redirect_url})
 
         except Exception as e:
             print(f"Error in post method: {e}")
