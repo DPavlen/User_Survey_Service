@@ -111,21 +111,21 @@ class Question(models.Model):
     #     except Question.DoesNotExist:
     #         return None
 
-    def get_survey_question_url(self):
-        """
-        Получение ссылки для html survey_question со слагами опроса и вопроса.
-        """
-        survey_slug = self.survey.slug
-        question_slug = self.slug
-        if question_slug:
-            return reverse(
-                "surveys:survey_question",
-                kwargs={'survey_slug': survey_slug,
-                        'question_slug': question_slug}
-            )
-        else:
-            # Если question_slug пустой или не определен, возвращаем пустую строку или другое значение по вашему усмотрению
-            return ""
+    # def get_survey_question_url(self):
+    #     """
+    #     Получение ссылки для html survey_question со слагами опроса и вопроса.
+    #     """
+    #     survey_slug = self.survey.slug
+    #     question_slug = self.slug
+    #     if question_slug:
+    #         return reverse(
+    #             "surveys:survey_question",
+    #             kwargs={'survey_slug': survey_slug,
+    #                     'question_slug': question_slug}
+    #         )
+    #     else:
+    #         # Если question_slug пустой или не определен, возвращаем пустую строку или другое значение по вашему усмотрению
+    #         return ""
 
     def __str__(self):
         return self.title

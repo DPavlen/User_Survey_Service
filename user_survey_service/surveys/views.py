@@ -42,13 +42,19 @@ def survey_detail_view(request, survey_slug):
         next_question_url = reverse('surveys:survey_question',
                                     kwargs={'survey_slug': survey.slug,
                                             'question_slug': parent_question.slug})
+        context = {
+            'survey': survey,
+            'parent_question': parent_question,
+            'next_question_url': next_question_url,
+        }
     else:
-        next_question_url = None
-    context = {
-        'survey': survey,
-        'parent_question': parent_question.slug if parent_question else None,
-        'next_question_url': next_question_url,
-    }
+        # next_question_url = None
+        context = {
+            'survey': survey,
+            'parent_question': None,
+            'next_question_url': None,
+        }
+    print("DETAIL:", context)
     return render(request, "surveys/survey_detail.html", context)
 
 
@@ -70,21 +76,58 @@ def load_questions(request, survey_slug):
 
 class SurveyQuestion(View):
     """Форма отправки ответов на опросы."""
-    def get(self, request, survey_slug, question_slug):
+    def get_parent_question(self, survey_slug, question_slug=None):
+        """Получить родительский вопрос."""
+        survey = get_object_or_404(Survey, slug=survey_slug)
+        query_params = {'survey': survey, 'parent_question__isnull': True}
+        if question_slug:
+            query_params['slug'] = question_slug
+        parent_question = get_object_or_404(Question, **query_params)
+        print("parent_question", parent_question)
+        return parent_question
+
+        # survey = get_object_or_404(Survey, slug=survey_slug)
+        # query_params = {'survey': survey, 'parent_question__isnull': True}
+        # if question_slug:
+        #     query_params['slug'] = question_slug
+        # return get_object_or_404(Question, **query_params)
+
+    def get_next_question(self, survey, current_question):
+        next_question = None
+        if current_question.child_questions.exists():
+            next_question = current_question.child_questions.first()
+        elif survey.questions.filter(parent_question=current_question).exists():
+            next_question = survey.questions.filter(parent_question=current_question).first()
+        return next_question
+
+    def get(self, request, survey_slug, question_slug=None):
         survey = get_object_or_404(Survey, slug=survey_slug)
         # Получаем вопрос, у которого parent_question равен None
-        question = get_object_or_404(
-            Question,
-            survey=survey,
-            parent_question__isnull=True
-        )
-        context = {
-            'survey': survey,
-            'question': question,
-            'user': request.user,
+        parent_question = self.get_parent_question(survey_slug, question_slug)
 
-        }
-        print("1-й вопрос")
+        if parent_question:
+            # Получаем следующий вопрос
+            next_question = self.get_next_question(survey, parent_question)
+
+            # Если есть parent_question, возвращаем страницу с подчиненным вопросом
+            context = {
+                'survey': survey,
+                'question': parent_question,
+                'user': request.user,
+                'choices': next_question.choices.all(),  # Передаем варианты ответов
+            }
+            print("Родитель:", context)
+        else:
+            # Если нет parent_question, возвращаем страницу с первым вопросом
+            first_question = survey.questions.filter(parent_question__isnull=True).first()
+            context = {
+                'survey': survey,
+                'question': first_question,
+                'user': request.user,
+                'choices': first_question.choices.all(),  # Передаем варианты ответов
+            }
+            print("Ребенок:", first_question)
+
         print(context)
         return render(request, 'surveys/survey_question.html', context)
 

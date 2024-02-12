@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% block content %}
+{{% block content %}
     <h2 align="center" style="color: navy;">Текущий Опрос: {{ survey.title }}</h2>
     {% if user.is_authenticated %}
         Привет, {{ user.username }}!
@@ -7,15 +7,16 @@
         Пожалуйста, войдите.
     {% endif %}
     <div style="margin-left: 40px; margin-right: 40px; color: #333;">
-        <form id="surveyForm" method="post" action="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=question.slug %}">
+        <form id="surveyForm" method="post" action="{% url 'surveys:survey_question'
+                survey_slug=survey.slug question_slug=question.slug %}">
             {% csrf_token %}
             <input type="hidden" name="parent_answer_id" value="{{ parent_answer.id }}">
             <br>
             <h3>{{ question.title }}</h3>
 
-            {% if question.choices.exists %}
+            {% if choices.exists %}
                 <!-- Радиокнопочки для выбора одного ответа из списка (предоставленный ответ) -->
-                {% for choice in question.choices.all %}
+                {% for choice in choices %}
                     <input type="radio" id="choice_{{ choice.id }}" name="question_{{ question.id }}" value="{{ choice.id }}" required>
                     <label for="choice_{{ choice.id }}">{{ choice.text }}</label><br>
                 {% endfor %}
@@ -26,6 +27,7 @@
 
             <button type="submit" id="submitFormBtn">Отправить выбранный ответ</button>
         </form>
+        <p>Choices: {{ choices }}</p>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
