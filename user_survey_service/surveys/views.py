@@ -86,12 +86,6 @@ class SurveyQuestion(View):
         print("parent_question", parent_question)
         return parent_question
 
-        # survey = get_object_or_404(Survey, slug=survey_slug)
-        # query_params = {'survey': survey, 'parent_question__isnull': True}
-        # if question_slug:
-        #     query_params['slug'] = question_slug
-        # return get_object_or_404(Question, **query_params)
-
     def get_next_question(self, survey, current_question):
         next_question = None
         if current_question.child_questions.exists():
@@ -114,7 +108,7 @@ class SurveyQuestion(View):
                 'survey': survey,
                 'question': parent_question,
                 'user': request.user,
-                'choices': next_question.choices.all(),  # Передаем варианты ответов
+                'choices': parent_question.choices.all(),  # Передаем варианты ответов
             }
             print("Родитель:", context)
         else:
