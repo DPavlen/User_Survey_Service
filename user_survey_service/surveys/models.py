@@ -34,32 +34,32 @@ class Survey(models.Model):
         "Тематика опроса",
     )
 
-    def get_detail_url(self):
-        """
-        Получение ссылки для html survey_detail со слагом опроса.
-        """
-        return reverse(
-            "surveys:survey_detail",
-            kwargs={'slug': self.slug}
-        )
+    # def get_detail_url(self):
+    #     """
+    #     Получение ссылки для html survey_detail со слагом опроса.
+    #     """
+    #     return reverse(
+    #         "surveys:survey_detail",
+    #         kwargs={'slug': self.slug}
+    #     )
 
-    def get_submit_url(self):
-        """
-        Получение ссылки для html survey_submit со слагом опроса.
-        """
-        return reverse(
-            "surveys:survey_submit",
-            kwargs={'slug': self.slug}
-        )
+    # def get_submit_url(self):
+    #     """
+    #     Получение ссылки для html survey_submit со слагом опроса.
+    #     """
+    #     return reverse(
+    #         "surveys:survey_submit",
+    #         kwargs={'slug': self.slug}
+    #     )
 
-    def get_results_url(self):
-        """
-        Получение ссылки для html survey_results со слагом опроса.
-        """
-        return reverse(
-            "surveys:survey_results",
-            kwargs={'slug': self.slug}
-        )
+    # def get_results_url(self):
+    #     """
+    #     Получение ссылки для html survey_results со слагом опроса.
+    #     """
+    #     return reverse(
+    #         "surveys:survey_results",
+    #         kwargs={'slug': self.slug}
+    #     )
 
     def __str__(self):
         return self.title
@@ -71,7 +71,6 @@ class Survey(models.Model):
 
 class Question(models.Model):
     """Модель вопросов. Вопрос связан с одним опросом."""
-    DoesNotExist = None
     title = models.CharField(
         "Вопрос",
         unique=True,

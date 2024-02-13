@@ -42,13 +42,14 @@ def survey_detail_view(request, survey_slug):
         next_question_url = reverse('surveys:survey_question',
                                     kwargs={'survey_slug': survey.slug,
                                             'question_slug': parent_question.slug})
+        print("REVERSE URL", next_question_url)
         context = {
             'survey': survey,
             'parent_question': parent_question,
             'next_question_url': next_question_url,
         }
     else:
-        # next_question_url = None
+        next_question_url = None
         context = {
             'survey': survey,
             'parent_question': None,
@@ -92,6 +93,7 @@ class SurveyQuestion(View):
             next_question = current_question.child_questions.first()
         elif survey.questions.filter(parent_question=current_question).exists():
             next_question = survey.questions.filter(parent_question=current_question).first()
+        print("next_question", next_question)
         return next_question
 
     def get(self, request, survey_slug, question_slug=None):
@@ -100,6 +102,7 @@ class SurveyQuestion(View):
         parent_question = self.get_parent_question(survey_slug, question_slug)
 
         if parent_question:
+            choices = parent_question.choices.all()
             # Получаем следующий вопрос
             next_question = self.get_next_question(survey, parent_question)
 
@@ -108,17 +111,20 @@ class SurveyQuestion(View):
                 'survey': survey,
                 'question': parent_question,
                 'user': request.user,
-                'choices': parent_question.choices.all(),  # Передаем варианты ответов
+                'choices': choices,  # Передаем варианты ответов
             }
+            print("Choices:", context['choices'])
             print("Родитель:", context)
         else:
             # Если нет parent_question, возвращаем страницу с первым вопросом
             first_question = survey.questions.filter(parent_question__isnull=True).first()
+            # next_question = self.get_next_question(survey, parent_question)
+            choices = first_question.choices.all()
             context = {
                 'survey': survey,
                 'question': first_question,
                 'user': request.user,
-                'choices': first_question.choices.all(),  # Передаем варианты ответов
+                'choices': list(choices),  # Передаем варианты ответов
             }
             print("Ребенок:", first_question)
 
@@ -186,7 +192,7 @@ class SurveyQuestion(View):
 
             if next_question:
                 redirect_url = reverse("surveys:survey_question", args=[survey_slug, next_question.slug])
-                print("Redirect URL:", redirect_url)
+                print("Redirect URL next_question:", redirect_url)
                 return redirect(redirect_url)
             else:
                 redirect_url = reverse("surveys:survey_results", args=[survey_slug])

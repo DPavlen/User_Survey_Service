@@ -1,39 +1,34 @@
 {% extends 'base.html' %}
+{% debug %}
 {{% block content %}
     <h2 align="center" style="color: navy;">Текущий Опрос: {{ survey.title }}</h2>
     {% if user.is_authenticated %}
-        Привет, {{ user.username }}!
+        Привет, {{ user.username }}! Добро пожаловать в наш прекрасный опросник!
     {% else %}
         Пожалуйста, войдите.
     {% endif %}
+{#    <pre>Context: {{ context|safe }}</pre>#}
     <div style="margin-left: 40px; margin-right: 40px; color: #333;">
-    <form id="surveyForm" method="post" action="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=question.slug %}">
-        {% csrf_token %}
-        <input type="hidden" name="parent_answer_id" value="{{ parent_answer.id }}">
-        <br>
-        <h3>{{ question.title }}</h3>
+        <form id="surveyForm" method="post" action="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=question.slug %}">
+            {% csrf_token %}
+            <input type="hidden" name="parent_answer_id" value="{{ parent_answer.id }}">
+            <br>
+            <h3>{{ question.title }}</h3>
+{#            <pre>Context: {{ context|safe }}</pre>#}
 
-        {% if parent_question %}
-            <!-- Варианты ответов для родительского вопроса -->
-            {% for choice in parent_question.choices.all %}
-                <input type="radio" id="choice_{{ choice.id }}" name="question_{{ question.id }}" value="{{ choice.id }}" required>
-                <label for="choice_{{ choice.id }}">{{ choice.text }}</label><br>
-            {% endfor %}
-        {% elif first_question %}
-            <!-- Варианты ответов для первого вопроса -->
-            {% for choice in first_question.choices.all %}
-                <input type="radio" id="choice_{{ choice.id }}" name="question_{{ question.id }}" value="{{ choice.id }}" required>
-                <label for="choice_{{ choice.id }}">{{ choice.text }}</label><br>
-            {% endfor %}
-        {% else %}
-            <!-- Если вопрос не имеет вариантов ответов, выводим текстовое поле -->
-            <input type="text" name="question_{{ question.id }}" required>
-            <p>ГДЕ ВОПРОСЫ ??</p>
-        {% endif %}
+            {% if choices %}
+                <!-- Варианты ответов -->
+                {% for choice in choices %}
+                    <input type="radio" id="choice_{{ choice.id }}" name="question_{{ question.id }}" value="{{ choice.id }}" required>
+                    <label for="choice_{{ choice.id }}">{{ choice.text }}</label><br>
+                {% endfor %}
+            {% else %}
+                <p>Нет выбора!</p>
+            {% endif %}
 
-        <!-- Кнопка для отправки формы -->
-        <button type="submit">Отправить</button>
-    </form>
+            <!-- Кнопка для отправки формы -->
+            <button type="submit">Отправить</button>
+        </form>
     </div>
 
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>

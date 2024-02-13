@@ -50,17 +50,20 @@
             let surveySlug = encodeURIComponent("{{ survey.slug }}");
 
             $.ajax({
-                {#url: `/surveys/${surveySlug}/load_questions/`,#}
-                url: `/surveys/${surveySlug}/load_questions/question/`,
+                url: `/surveys/${surveySlug}/load_questions/`,
+                {#url: `/surveys/${surveySlug}/load_questions/question/`,#}
                 method: "GET",
                 success: function (data) {
                     // Очищаем контейнер перед добавлением новых вопросов
                     let questionsContainer = $("#questionsContainer");
                     questionsContainer.empty();
 
+                    // Преобразуем строку JSON в объект JavaScript
+                    let questionsData = JSON.parse(data.questions);
+
                     // Проверка на массив
-                    if (Array.isArray(data.questions)) {
-                        data.questions.forEach(function (questionData) {
+                    if (Array.isArray(questionsData)) {
+                        questionsData.forEach(function (questionData) {
                             let question = questionData.fields;
                             let questionHTML = `<div>
                                 <h3>${question.title || 'No title available'}</h3>`;
@@ -94,9 +97,9 @@
                 },
                 error: function (xhr, status, error) {
                     console.error(`Error: ${status} - ${error}`);
-                }
+                    }
+                });
             });
-        });
 
         // Добавляем обработчик клика на ссылку
         $("#nextQuestionLink").click(function () {

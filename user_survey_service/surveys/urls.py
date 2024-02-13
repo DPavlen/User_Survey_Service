@@ -11,5 +11,6 @@ urlpatterns = [
     path("surveys/<slug:survey_slug>/load_questions/", views.load_questions, name="load_questions"),
     # Ответы на вопросы
     path("surveys/<slug:survey_slug>/<slug:question_slug>/", views.SurveyQuestion.as_view(), name="survey_question"),
+
     # path("surveys/<slug:survey_slug>/submit/", views.SurveySubmitView.as_view(), name="survey_submit"),
 ]
