@@ -25,7 +25,12 @@
             {% else %}
                 <p>Нет выбора!</p>
             {% endif %}
-
+            {% if next_question %}
+                <p>Next Question Exists: {{ next_question.title }}</p>
+                <a href="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=next_question.slug %}">Следующий вопрос</a>
+            {% else %}
+                <p>Next Question Does Not Exist</p>
+            {% endif %}
             <!-- Кнопка для отправки формы -->
             <button type="submit">Отправить</button>
         </form>

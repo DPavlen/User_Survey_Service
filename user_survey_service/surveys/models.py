@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils.text import slugify
 from django.db.models import UniqueConstraint
 from django.urls import reverse
 from autoslug import AutoSlugField
@@ -8,7 +9,7 @@ from users.models import MyUser
 
 
 def get_slug(instance):
-    """Транслитерованный слаг для модели опросов."""
+    """Транслитерованный слаг для модели опросов и вопросов."""
     return translit(
         instance.title,
         'ru',
@@ -34,32 +35,6 @@ class Survey(models.Model):
         "Тематика опроса",
     )
 
-    # def get_detail_url(self):
-    #     """
-    #     Получение ссылки для html survey_detail со слагом опроса.
-    #     """
-    #     return reverse(
-    #         "surveys:survey_detail",
-    #         kwargs={'slug': self.slug}
-    #     )
-
-    # def get_submit_url(self):
-    #     """
-    #     Получение ссылки для html survey_submit со слагом опроса.
-    #     """
-    #     return reverse(
-    #         "surveys:survey_submit",
-    #         kwargs={'slug': self.slug}
-    #     )
-
-    # def get_results_url(self):
-    #     """
-    #     Получение ссылки для html survey_results со слагом опроса.
-    #     """
-    #     return reverse(
-    #         "surveys:survey_results",
-    #         kwargs={'slug': self.slug}
-    #     )
 
     def __str__(self):
         return self.title
@@ -71,6 +46,14 @@ class Survey(models.Model):
 
 class Question(models.Model):
     """Модель вопросов. Вопрос связан с одним опросом."""
+    class DegreeQuestion(models.TextChoices):
+        """
+        Определение степени вопроса.
+        """
+        PARENT = "parent"
+        CHILD = "child"
+        LAST_CHILD = "last_child"
+
     title = models.CharField(
         "Вопрос",
         unique=True,
@@ -84,12 +67,14 @@ class Question(models.Model):
         related_name="questions",
         verbose_name="Опрос",
     )
-    parent_question = models.ForeignKey(
-        "self",
+    degree_question = models.TextField(
+        # "self",
         null=True,
         blank=True,
-        on_delete=models.CASCADE,
-        related_name="child_questions",
+        # related_name="child_questions",
+        choices=DegreeQuestion.choices,
+        default=DegreeQuestion.CHILD,
+        max_length=10,
     )
     slug = AutoSlugField(
         "Слаг вопроса",
@@ -97,34 +82,6 @@ class Question(models.Model):
         unique=True,
         max_length=155,
     )
-
-    # def get_next_question(self):
-    #     """
-    #     Возврат объекта следующего вопроса-родителя.
-    #     """
-    #     try:
-    #         next_question = Question.objects.filter(
-    #             parent_question=None, order__gt=self.order, survey=self.survey
-    #         ).order_by('order').first()
-    #         return next_question
-    #     except Question.DoesNotExist:
-    #         return None
-
-    # def get_survey_question_url(self):
-    #     """
-    #     Получение ссылки для html survey_question со слагами опроса и вопроса.
-    #     """
-    #     survey_slug = self.survey.slug
-    #     question_slug = self.slug
-    #     if question_slug:
-    #         return reverse(
-    #             "surveys:survey_question",
-    #             kwargs={'survey_slug': survey_slug,
-    #                     'question_slug': question_slug}
-    #         )
-    #     else:
-    #         # Если question_slug пустой или не определен, возвращаем пустую строку или другое значение по вашему усмотрению
-    #         return ""
 
     def __str__(self):
         return self.title
@@ -180,7 +137,6 @@ class Answer(models.Model):
             )
         ]
 
-
 class Choice(models.Model):
     """Модель выбора варианта ответов к вопросам. 
     """
@@ -188,11 +144,19 @@ class Choice(models.Model):
         Question,
         on_delete=models.CASCADE,
         related_name="choices",
-        verbose_name="Выбор",
+        verbose_name="Текущий вопрос",
     )
     text = models.CharField(
         "Текст варианта ответа",
         max_length=255
+    )
+    child_question = models.ForeignKey(
+        Question,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="choices_child",
+        verbose_name="Следующий вопрос",
     )
 
     def __str__(self):

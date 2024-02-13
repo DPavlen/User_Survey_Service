@@ -70,7 +70,7 @@ def load_questions(request, survey_slug):
     serialized_data = serialize(
         'json',
         questions,
-        fields=('id', 'title', 'text', 'slug', 'parent_question'))
+        fields=('id', 'title', 'text', 'slug', 'degree_question'))
 
     return JsonResponse({'questions': serialized_data}, safe=False)
 
@@ -93,7 +93,7 @@ class SurveyQuestion(View):
             next_question = current_question.child_questions.first()
         elif survey.questions.filter(parent_question=current_question).exists():
             next_question = survey.questions.filter(parent_question=current_question).first()
-        print("next_question", next_question)
+        print("next_question и его тип данных", type(next_question))
         return next_question
 
     def get(self, request, survey_slug, question_slug=None):
@@ -104,6 +104,7 @@ class SurveyQuestion(View):
         if parent_question:
             choices = parent_question.choices.all()
             # Получаем следующий вопрос
+            choices_list = list(choices)
             next_question = self.get_next_question(survey, parent_question)
 
             # Если есть parent_question, возвращаем страницу с подчиненным вопросом
@@ -111,7 +112,8 @@ class SurveyQuestion(View):
                 'survey': survey,
                 'question': parent_question,
                 'user': request.user,
-                'choices': choices,  # Передаем варианты ответов
+                'choices': choices_list,
+                'next_question': next_question,  # Добавляем next_question в контекст
             }
             print("Choices:", context['choices'])
             print("Родитель:", context)
@@ -120,11 +122,12 @@ class SurveyQuestion(View):
             first_question = survey.questions.filter(parent_question__isnull=True).first()
             # next_question = self.get_next_question(survey, parent_question)
             choices = first_question.choices.all()
+            choices_list = list(choices)
             context = {
                 'survey': survey,
                 'question': first_question,
                 'user': request.user,
-                'choices': list(choices),  # Передаем варианты ответов
+                'choices': choices_list,  # Передаем варианты ответов
             }
             print("Ребенок:", first_question)
 
@@ -192,6 +195,7 @@ class SurveyQuestion(View):
 
             if next_question:
                 redirect_url = reverse("surveys:survey_question", args=[survey_slug, next_question.slug])
+                print("Next question slug:", next_question.slug)
                 print("Redirect URL next_question:", redirect_url)
                 return redirect(redirect_url)
             else:

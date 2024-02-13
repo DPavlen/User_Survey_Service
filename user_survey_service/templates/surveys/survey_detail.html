@@ -51,7 +51,6 @@
 
             $.ajax({
                 url: `/surveys/${surveySlug}/load_questions/`,
-                {#url: `/surveys/${surveySlug}/load_questions/question/`,#}
                 method: "GET",
                 success: function (data) {
                     // Очищаем контейнер перед добавлением новых вопросов

@@ -13,7 +13,7 @@ class SurveyAdmin(admin.ModelAdmin):
 
 @admin.register(Question)
 class QuestionAdmin(admin.ModelAdmin):
-    list_display = ("pk", "title", "survey", "parent_question", "slug")
+    list_display = ("pk", "title", "survey", "degree_question", "slug")
     list_display_links = ("title",)
     search_fields = ("title",)
     empty_value_display = "-пусто-"
@@ -29,7 +29,7 @@ class AnswerAdmin(admin.ModelAdmin):
 
 @admin.register(Choice)
 class ChoiceAdmin(admin.ModelAdmin):
-    list_display = ("pk", "question", "text")
-    list_display_links = ("question",)
+    list_display = ("pk", "question", "text", "child_question")
+    list_display_links = ["question"]
     search_fields = ("question",)
     empty_value_display = "-пусто-"

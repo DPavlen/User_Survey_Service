@@ -5,7 +5,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("surveys", "0003_alter_question_parent_question"),
+        ("surveys", "0002_alter_question_parent_question"),
     ]
 
     operations = [
@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
                     ("last_child", "Other"),
                 ],
                 default="child",
-                max_length=10,
+                max_length=255,
                 null=True,
             ),
         ),
