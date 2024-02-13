@@ -10,29 +10,31 @@
 {#    <pre>Context: {{ context|safe }}</pre>#}
     <div style="margin-left: 40px; margin-right: 40px; color: #333;">
         <form id="surveyForm" method="post" action="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=question.slug %}">
-            {% csrf_token %}
-            <input type="hidden" name="parent_answer_id" value="{{ parent_answer.id }}">
-            <br>
-            <h3>{{ question.title }}</h3>
-{#            <pre>Context: {{ context|safe }}</pre>#}
+        {% csrf_token %}
+        <input type="hidden" name="parent_answer_id" value="{{ parent_answer.id }}">
+        <br>
+        <h3>{{ question.title }}</h3>
 
-            {% if choices %}
-                <!-- Варианты ответов -->
-                {% for choice in choices %}
-                    <input type="radio" id="choice_{{ choice.id }}" name="question_{{ question.id }}" value="{{ choice.id }}" required>
-                    <label for="choice_{{ choice.id }}">{{ choice.text }}</label><br>
-                {% endfor %}
-            {% else %}
-                <p>Нет выбора!</p>
-            {% endif %}
-            {% if next_question %}
-                <p>Next Question Exists: {{ next_question.title }}</p>
-                <a href="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=next_question.slug %}">Следующий вопрос</a>
-            {% else %}
-                <p>Next Question Does Not Exist</p>
-            {% endif %}
-            <!-- Кнопка для отправки формы -->
-            <button type="submit">Отправить</button>
+        {% if choices %}
+            <!-- Варианты ответов -->
+            {% for choice in choices %}
+                <input type="radio" id="choice_{{ choice.id }}" name="question_{{ question.id }}" value="{{ choice.id }}" required>
+                <label for="choice_{{ choice.id }}">{{ choice.text }}</label><br>
+            {% endfor %}
+        {% else %}
+            <p>Нет выбора!</p>
+        {% endif %}
+
+        {% if next_question %}
+            <!-- Если есть следующий вопрос, отображаем его и создаем ссылку -->
+            <p>Следующий вопрос: {{ next_question.title }}</p>
+            <a href="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=next_question.slug %}">Следующий вопрос</a>
+        {% else %}
+            <p>Следующего вопроса нет</p>
+        {% endif %}
+
+        <!-- Кнопка для отправки формы -->
+        <button type="submit">Отправить выбранный ответ</button>
         </form>
     </div>
 

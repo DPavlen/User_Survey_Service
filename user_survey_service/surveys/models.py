@@ -46,6 +46,8 @@ class Survey(models.Model):
 
 class Question(models.Model):
     """Модель вопросов. Вопрос связан с одним опросом."""
+    objects = None
+
     class DegreeQuestion(models.TextChoices):
         """
         Определение степени вопроса.
@@ -67,7 +69,7 @@ class Question(models.Model):
         related_name="questions",
         verbose_name="Опрос",
     )
-    degree_question = models.TextField(
+    degree_question = models.CharField(
         # "self",
         null=True,
         blank=True,
