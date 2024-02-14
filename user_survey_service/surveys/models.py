@@ -132,12 +132,12 @@ class Answer(models.Model):
     class Meta:
         verbose_name = "Ответ"
         verbose_name_plural = "Ответы"
-        constraints = [
-            UniqueConstraint(
-                fields=("question", "author"),
-                name="unique_question_author",
-            )
-        ]
+        # constraints = [
+        #     UniqueConstraint(
+        #         fields=("question", "author"),
+        #         name="unique_question_author",
+        #     )
+        # ]
 
 class Choice(models.Model):
     """Модель выбора варианта ответов к вопросам. 

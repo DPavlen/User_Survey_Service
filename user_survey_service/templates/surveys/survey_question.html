@@ -3,18 +3,20 @@
 {{% block content %}
     <h2 align="center" style="color: navy;">Текущий Опрос: {{ survey.title }}</h2>
     {% if user.is_authenticated %}
-        Привет, {{ user.username }}! Добро пожаловать в наш прекрасный опросник!
+        Привет, {{ user.username }}! Добро пожаловать в наш прекрасный опросник!   {{ parent_answer.id }}
     {% else %}
         Пожалуйста, войдите.
     {% endif %}
-{#    <pre>Context: {{ context|safe }}</pre>#}
+
     <div style="margin-left: 40px; margin-right: 40px; color: #333;">
         <form id="surveyForm" method="post" action="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=question.slug %}">
         {% csrf_token %}
         <input type="hidden" name="parent_answer_id" value="{{ parent_answer.id }}">
         <br>
         <h3>{{ question.title }}</h3>
-
+        {% if next_question_url %}
+            <a href="{{ next_question_url }}">Следующий вопрос</a>
+        {% endif %}
         {% if choices %}
             <!-- Варианты ответов -->
             {% for choice in choices %}

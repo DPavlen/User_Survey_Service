@@ -211,15 +211,13 @@ class SurveyQuestion(View):
                     next_question = survey.questions.filter(parent_question=question).first()
 
                 if next_question:
-                    redirect_url = reverse("surveys:survey_question",
-                                           args=[survey_slug, next_question.slug])
-                    print("next_question.slug",next_question.slug)
-                    print("2-й ВОПРОС:", redirect_url)
-                    return redirect(redirect_url)
-                else:
-                    redirect_url = reverse("surveys:survey_results", args=[survey_slug])
-                    print("СТАТИСТИКА ОТВЕТОВ:", redirect_url)
-                    return redirect(redirect_url)
+                    print("next_question.slug", next_question.slug)
+                    return redirect(reverse("surveys:survey_question",
+                                            args=[survey_slug, next_question.slug]))
+                # else:
+                #     redirect_url = reverse("surveys:survey_results", args=[survey_slug])
+                #     print("СТАТИСТИКА ОТВЕТОВ:", redirect_url)
+                #     return redirect(redirect_url)
 
             # Добавьте обработку случая, когда ответа нет или вопрос не имеет вариантов ответов
             return HttpResponse("Invalid request or question setup.")
