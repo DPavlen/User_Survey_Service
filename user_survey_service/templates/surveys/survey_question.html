@@ -14,9 +14,9 @@
         <input type="hidden" name="parent_answer_id" value="{{ parent_answer.id }}">
         <br>
         <h3>{{ question.title }}</h3>
-        {% if next_question_url %}
-            <a href="{{ next_question_url }}">Следующий вопрос</a>
-        {% endif %}
+{#        {% if next_question.slug %}#}
+{#            <a href="{{ next_question.slug }}">Следующий вопрос</a>#}
+{#        {% endif %}#}
         {% if choices %}
             <!-- Варианты ответов -->
             {% for choice in choices %}
@@ -30,6 +30,7 @@
         {% if next_question %}
             <!-- Если есть следующий вопрос, отображаем его и создаем ссылку -->
             <p>Следующий вопрос: {{ next_question.title }}</p>
+{#            {{ next_question.slug }}#}
             <a href="{% url 'surveys:survey_question' survey_slug=survey.slug question_slug=next_question.slug %}">Следующий вопрос</a>
         {% else %}
             <p>Следующего вопроса нет</p>

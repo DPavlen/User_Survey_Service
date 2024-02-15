@@ -7,6 +7,7 @@ urlpatterns = [
     path("surveys/", views.survey_list, name="survey_list"),
     path("surveys/<slug:survey_slug>/", views.survey_detail_view, name="survey_detail"),
     path("surveys/<slug:survey_slug>/results/", views.SurveyResultsStatistics.as_view(), name="survey_results"),
+
     # Ajax загрузка вопросов
     path("surveys/<slug:survey_slug>/load_questions/", views.load_questions, name="load_questions"),
     # Ответы на вопросы

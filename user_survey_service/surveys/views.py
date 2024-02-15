@@ -2,7 +2,7 @@
 from django.core.paginator import Paginator
 from django.core.serializers import serialize
 from django.db.models import Q
-from django.http import HttpResponseServerError, JsonResponse, HttpResponse
+from django.http import HttpResponseServerError, JsonResponse, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views import View
@@ -91,27 +91,34 @@ class SurveyQuestion(View):
         return parent_question
 
     def get_next_question(self, survey, current_question, user=None):
-        next_question = None
         user_answer = Answer.objects.filter(question=current_question, author=user).first()
-        if user_answer and user_answer.choice:
-            # Если у пользователя есть ответ с выбранным вариантом, ищем следующий вопрос
-            next_question = user_answer.choice.child_question
+        if user_answer and user_answer.choice and user_answer.choice.child_question:
+            # Если у пользователя есть ответ с выбранным вариантом, возвращаем следующий вопрос
+            return user_answer.choice.child_question
         elif current_question.choices_child.exists():
             # Если у текущего вопроса есть дочерние вопросы в таблице Choice,
-            # ищем следующий вопрос среди дочерних вопросов
-            next_question = current_question.choices_child.first()
-        return next_question
+            # возвращаем первый дочерний вопрос
+            return current_question.choices_child.first()
+        return None
 
     def get(self, request, survey_slug, question_slug=None):
         survey = get_object_or_404(Survey, slug=survey_slug)
         # Получаем вопрос, у которого degree_question=Question.DegreeQuestion.PARENT
         degree_question = self.get_parent_question(survey_slug, question_slug)
+        # Извлекаем choice_id из запроса
+        choice_id = request.GET.get('choice_id')
 
         if degree_question:
             choices = degree_question.choices.all()
             # Получаем следующий вопрос
             choices_list = list(choices)
-            next_question = self.get_next_question(survey, degree_question)
+            next_question = self.get_next_question(survey, degree_question, user=request.user)
+
+            if next_question:
+                next_question_slug = next_question.slug
+            else:
+                next_question_slug = None
+
             # Если есть degree_question, возвращаем страницу с подчиненным вопросом
             context = {
                 'survey': survey,
@@ -119,52 +126,59 @@ class SurveyQuestion(View):
                 'user': request.user,
                 'choices': choices_list,
                 'next_question': next_question,  # Добавляем next_question в контекст
+                'next_question_slug': next_question_slug,  # Добавляем next_question_slug в контекст
+                'choice_id': choice_id,
             }
-            print("Choices:", context['choices'])
-            print("Родитель:", context)
-
-        else:
-            # Получаем первый вопрос с child_question=True и связываем с ответом author
-            child_question = survey.questions.filter(choices__child_question__isnull=False).first()
-            user_answer = Answer.objects.filter(question=child_question, author=request.user).first()
-
-            if user_answer and user_answer.choice and user_answer.choice.child_question:
-                # Если у пользователя есть ответ с выбранным вариантом и связанным дочерним вопросом
-                next_question = user_answer.choice.child_question
-            else:
-                # Иначе используем первый вариант ответа, связанный с дочерним вопросом
-                next_question = child_question.choices.filter(child_question__isnull=False).first().child_question
-
-            choices = child_question.choices.all()
-            choices_list = list(choices)
-            context = {
-                'survey': survey,
-                'question': child_question,
-                'user': request.user,
-                'choices': choices_list,
-                'next_question': next_question,
-            }
-            print("Ребенок:", child_question)
-
-            print(context)
-        return render(request, 'surveys/survey_question.html', context)
+            print("GET.Choices:", context['choices'])
+            print("GET.Родитель:", context)
+            print("GET.next_question:", next_question)
+            print("GET.next_question_slug:", next_question_slug)
+            return render(request, 'surveys/survey_question.html', context)
+        # else:
+        #     # Получаем первый вопрос с child_question=True и связываем с ответом author
+        #     child_question = survey.questions.filter(choices__child_question__isnull=False).first()
+        #     user_answer = Answer.objects.filter(question=child_question, author=request.user).first()
+        #     print("user_answer", user_answer)
+        #     if user_answer and user_answer.choice and user_answer.choice.child_question:
+        #         # Если у пользователя есть ответ с выбранным вариантом и связанным дочерним вопросом
+        #         next_question = user_answer.choice.child_question
+        #     else:
+        #         # Иначе используем первый вариант ответа, связанный с дочерним вопросом
+        #         next_question = child_question.choices.filter(child_question__isnull=False).first().child_question
+        #
+        #     choices = child_question.choices.all()
+        #     choices_list = list(choices)
+        #     context = {
+        #         'survey': survey,
+        #         'question': child_question,
+        #         'user': request.user,
+        #         'choices': choices_list,
+        #         'next_question': next_question,
+        #     }
+        #     print("Ребенок:", child_question)
+        #
+        #     print(context)
+        #     return render(request, 'surveys/survey_question.html', context)
 
     def post(self, request, survey_slug, question_slug):
         try:
+            print("POST.survey_slug:", survey_slug)
+            print("POST.question_slug:", question_slug)
             # survey = get_object_or_404(Survey, slug=survey_slug)
             survey = Survey.objects.get(slug=survey_slug)
             question = get_object_or_404(Question, survey=survey, slug=question_slug)
-            print("Question object:", question)
+            # Извлекаем choice_id из POST-запроса
+            choice_id = request.POST.get(f"question_{question.id}")
+            print("POST.Question object:", question)
 
             # Получаем ответы пользователя
             answers = []
             question_id = f"question_{question.id}"
-            print("Question ID:", question_id)
+            print("POST.Question ID:", question_id)
 
             if question.choices.exists():
                 # Если вопрос имеет варианты ответов, сохраняем выбранный вариант
-                choice_id = request.POST.get(question_id)
-                print("Choice ID:", choice_id)
+                print("POST.Choice ID:", choice_id)
                 if choice_id:
                     choice = get_object_or_404(Choice, id=choice_id)
                     answer = Answer(
@@ -173,18 +187,6 @@ class SurveyQuestion(View):
                         choice=choice,
                     )
                     answers.append(answer)
-            else:
-                # Если вопрос не имеет вариантов ответов, добавляем соответствующий текст
-                answer_text = request.POST.get(question_id, "")
-                print("Answer Text:", answer_text)
-                if answer_text:
-                    answer = Answer(
-                        question=question,
-                        author=request.user,
-                        text=answer_text
-                    )
-                    answers.append(answer)
-
             try:
                 Answer.objects.bulk_create(answers)
             except Exception as e:
@@ -201,7 +203,7 @@ class SurveyQuestion(View):
                 if user_answer.choice and user_answer.choice.child_question:
                     # Если у пользователя есть выбранный choice и связанный child_question
                     next_question = user_answer.choice.child_question
-                    print("выбранный choice и связанный child_question:", next_question)
+                    print("POST.выбранный choice и связанный child_question:", next_question)
                 elif question.choices_child.exists():
                     # Если у текущего вопроса есть дочерние вопросы в таблице Choice,
                     # ищем следующий вопрос среди дочерних вопросов
@@ -211,9 +213,18 @@ class SurveyQuestion(View):
                     next_question = survey.questions.filter(parent_question=question).first()
 
                 if next_question:
-                    print("next_question.slug", next_question.slug)
-                    return redirect(reverse("surveys:survey_question",
-                                            args=[survey_slug, next_question.slug]))
+                    print("POST.type()", type(next_question))
+                    print("POST.next_question.slug", next_question.slug)
+                    return HttpResponseRedirect(reverse("surveys:survey_question", kwargs={
+                        'survey_slug': survey_slug,
+                        'question_slug': next_question.slug,
+                    }))
+
+
+                # if next_question:
+                #     print("next_question.slug", next_question.slug)
+                #     return redirect(reverse("surveys:survey_question",
+                #                             args=[survey_slug, next_question.slug]))
                 # else:
                 #     redirect_url = reverse("surveys:survey_results", args=[survey_slug])
                 #     print("СТАТИСТИКА ОТВЕТОВ:", redirect_url)
