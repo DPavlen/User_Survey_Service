@@ -2,7 +2,8 @@
 from django.core.paginator import Paginator
 from django.core.serializers import serialize
 from django.db.models import Q
-from django.http import HttpResponseServerError, JsonResponse, HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseServerError, JsonResponse, HttpResponse, HttpResponseRedirect, HttpResponseNotFound, \
+    HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views import View
@@ -14,12 +15,14 @@ from .models import Survey, Question, Choice, Answer
 
 COUNT_POST = 10
 
+
 def get_paginated_objects(objects, request):
     """Возвращает объекты с пагинацией."""
     paginator = Paginator(objects, COUNT_POST)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     return page_obj
+
 
 def survey_list(request):
     """Главная страница списка опросов пользователей."""
@@ -31,31 +34,39 @@ def survey_list(request):
     }
     return render(request, "surveys/index.html", context)
 
+
 def survey_detail_view(request, survey_slug):
     """
     Информация о деталях опросов и его вопросов.
     Вычисляем первый вопрос у которого нет родителя и передаем в контекст.
     """
-    survey = get_object_or_404(Survey, slug=survey_slug)
+    # survey = get_object_or_404(Survey, slug=survey_slug)
+    try:
+        survey = Survey.objects.get(slug=survey_slug)
+    except Survey.DoesNotExist:
+        # Обработка случая, когда опрос не найден
+        return HttpResponseNotFound("Опрос не найден")
+
+    # survey = Survey.objects.filter(), slug=survey_slug)
     parent_question = survey.questions.filter(degree_question=Question.DegreeQuestion.PARENT).first()
     print("PARENT_QUESTION:", parent_question)
     if parent_question:
         parent_question_url = reverse('surveys:survey_question',
-                                    kwargs={'survey_slug': survey.slug,
-                                            'question_slug': parent_question.slug})
+                                      kwargs={'survey_slug': survey.slug,
+                                              'question_slug': parent_question.slug})
         print("REVERSE URL", parent_question_url)
         context = {
             'survey': survey,
             'parent_question': parent_question,
             'parent_question_url': parent_question_url,
         }
-    # else:
-    #     next_question_url = None
-    #     context = {
-    #         'survey': survey,
-    #         'parent_question': None,
-    #         'next_question_url': None,
-    #     }
+        # else:
+        #     next_question_url = None
+        #     context = {
+        #         'survey': survey,
+        #         'parent_question': None,
+        #         'next_question_url': None,
+        #     }
         print("DETAIL:", context)
         return render(request, "surveys/survey_detail.html", context)
 
@@ -66,7 +77,7 @@ def load_questions(request, survey_slug):
     """
     survey = get_object_or_404(Survey, slug=survey_slug)
     questions = survey.questions.all()
-    
+
     # Используем json.dumps для корректной сериализации
     serialized_data = serialize(
         'json',
@@ -78,9 +89,11 @@ def load_questions(request, survey_slug):
 
 class SurveyQuestion(View):
     """Форма отправки ответов на опросы."""
+
     def get_parent_question(self, survey_slug, question_slug=None):
         """Получить родительский вопрос."""
-        survey = get_object_or_404(Survey, slug=survey_slug)
+        # survey = get_object_or_404(Survey, slug=survey_slug)
+        survey = Survey.objects.get(slug=survey_slug)
         query_params = {'survey': survey,
                         'degree_question': Question.DegreeQuestion.PARENT
                         }
@@ -91,7 +104,8 @@ class SurveyQuestion(View):
         return parent_question
 
     def get_next_question(self, survey, current_question, user=None):
-        user_answer = Answer.objects.filter(question=current_question, author=user).first()
+        # user_answer = Answer.objects.filter(question=current_question, author=user).first()
+        user_answer = user.answers_user.filter(question=current_question).first()
         if user_answer and user_answer.choice and user_answer.choice.child_question:
             # Если у пользователя есть ответ с выбранным вариантом, возвращаем следующий вопрос
             return user_answer.choice.child_question
@@ -103,62 +117,46 @@ class SurveyQuestion(View):
 
     def get(self, request, survey_slug, question_slug=None):
         survey = get_object_or_404(Survey, slug=survey_slug)
-        # Получаем вопрос, у которого degree_question=Question.DegreeQuestion.PARENT
-        degree_question = self.get_parent_question(survey_slug, question_slug)
+        parent_question = self.get_parent_question(survey_slug, question_slug)
+        print("МЕТОД get. degree_question", parent_question)
         # Извлекаем choice_id из запроса
         choice_id = request.GET.get('choice_id')
-
-        if degree_question:
-            choices = degree_question.choices.all()
+        print("МЕТОД get.choice_id", choice_id)
+        if parent_question:
+            choices = parent_question.choices.all()
             # Получаем следующий вопрос
             choices_list = list(choices)
-            next_question = self.get_next_question(survey, degree_question, user=request.user)
+            next_question = self.get_next_question(survey, parent_question, user=request.user)
 
             if next_question:
                 next_question_slug = next_question.slug
+                # Создаем URL для следующего вопроса
+                next_question_url = reverse('surveys:survey_question',
+                                            kwargs={'survey_slug': survey_slug,
+                                                    'question_slug': next_question_slug})
+                if next_question_url:
+                    print("GET.next_question_url:", next_question_url)
             else:
                 next_question_slug = None
+                next_question_url = None
 
-            # Если есть degree_question, возвращаем страницу с подчиненным вопросом
             context = {
+                # 'survey': parent_question.survey,
                 'survey': survey,
-                'question': degree_question,
+                'question': parent_question,
                 'user': request.user,
                 'choices': choices_list,
                 'next_question': next_question,  # Добавляем next_question в контекст
                 'next_question_slug': next_question_slug,  # Добавляем next_question_slug в контекст
                 'choice_id': choice_id,
+                'next_question_url': next_question_url,
             }
             print("GET.Choices:", context['choices'])
             print("GET.Родитель:", context)
             print("GET.next_question:", next_question)
             print("GET.next_question_slug:", next_question_slug)
+            print("GET.next_question_url:", next_question_url)
             return render(request, 'surveys/survey_question.html', context)
-        # else:
-        #     # Получаем первый вопрос с child_question=True и связываем с ответом author
-        #     child_question = survey.questions.filter(choices__child_question__isnull=False).first()
-        #     user_answer = Answer.objects.filter(question=child_question, author=request.user).first()
-        #     print("user_answer", user_answer)
-        #     if user_answer and user_answer.choice and user_answer.choice.child_question:
-        #         # Если у пользователя есть ответ с выбранным вариантом и связанным дочерним вопросом
-        #         next_question = user_answer.choice.child_question
-        #     else:
-        #         # Иначе используем первый вариант ответа, связанный с дочерним вопросом
-        #         next_question = child_question.choices.filter(child_question__isnull=False).first().child_question
-        #
-        #     choices = child_question.choices.all()
-        #     choices_list = list(choices)
-        #     context = {
-        #         'survey': survey,
-        #         'question': child_question,
-        #         'user': request.user,
-        #         'choices': choices_list,
-        #         'next_question': next_question,
-        #     }
-        #     print("Ребенок:", child_question)
-        #
-        #     print(context)
-        #     return render(request, 'surveys/survey_question.html', context)
 
     def post(self, request, survey_slug, question_slug):
         try:
@@ -166,7 +164,8 @@ class SurveyQuestion(View):
             print("POST.question_slug:", question_slug)
             # survey = get_object_or_404(Survey, slug=survey_slug)
             survey = Survey.objects.get(slug=survey_slug)
-            question = get_object_or_404(Question, survey=survey, slug=question_slug)
+            # question = get_object_or_404(Question, survey=survey, slug=question_slug)
+            question = Question.objects.get(survey=survey, slug=question_slug)
             # Извлекаем choice_id из POST-запроса
             choice_id = request.POST.get(f"question_{question.id}")
             print("POST.Question object:", question)
@@ -180,7 +179,8 @@ class SurveyQuestion(View):
                 # Если вопрос имеет варианты ответов, сохраняем выбранный вариант
                 print("POST.Choice ID:", choice_id)
                 if choice_id:
-                    choice = get_object_or_404(Choice, id=choice_id)
+                    # choice = get_object_or_404(Choice, id=choice_id)
+                    choice = Choice.objects.get(id=choice_id)
                     answer = Answer(
                         question=question,
                         author=request.user,
@@ -196,7 +196,12 @@ class SurveyQuestion(View):
                 )
 
             # Получаем ответ пользователя для текущего вопроса
-            user_answer = Answer.objects.filter(question=question, author=request.user).first()
+            # user_answer = Answer.objects.filter(question=question, author=request.user).first()
+            user_answer = request.user.answers_user.filter(question=question).first()
+
+            if not user_answer:
+                # Если пользователя нет в ответах, вернуть какое-то сообщение
+                return HttpResponseBadRequest("Не ответа у пользователя.")
 
             if question.choices.exists() and user_answer:
                 # Если вопрос имеет варианты ответов и у пользователя уже есть ответ
@@ -214,13 +219,18 @@ class SurveyQuestion(View):
 
                 if next_question:
                     print("POST.type()", type(next_question))
+                    print("POST.next_question", next_question)
                     print("POST.next_question.slug", next_question.slug)
+
                     return HttpResponseRedirect(reverse("surveys:survey_question", kwargs={
                         'survey_slug': survey_slug,
                         'question_slug': next_question.slug,
+
                     }))
+                    # return HttpResponseRedirect(
+                    #     reverse("surveys:survey_question", args=[survey_slug, next_question.slug], current_app=survey._meta.surveys))
 
-
+                return HttpResponseBadRequest("Next question not found.")
                 # if next_question:
                 #     print("next_question.slug", next_question.slug)
                 #     return redirect(reverse("surveys:survey_question",
@@ -234,13 +244,15 @@ class SurveyQuestion(View):
             return HttpResponse("Invalid request or question setup.")
 
         except Exception as e:
-            print(f"Error in post method: {e}")
+            print(f"Ошибка в методе post: {e}")
             return HttpResponseServerError(
                 f"Ошибка в методе post: {e}"
             )
 
+
 class SurveyResultsStatistics(View):
     """Отображение результатов статистики."""
+
     def get(self, request, survey_slug):
         survey = get_object_or_404(Survey, slug=survey_slug)
         questions = survey.questions.all()
@@ -254,7 +266,7 @@ class SurveyResultsStatistics(View):
             answer_percentage = 0
             if total_participants > 0:
                 answer_percentage = (answer_count / total_participants) * 100
-              
+
             option_stats = []
             for choice in question.choices.all():
                 option_count = answers.filter(choice=choice).count()
